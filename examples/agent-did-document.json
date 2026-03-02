@@ -1,0 +1,33 @@
+{
+  "@context": [
+    "https://www.w3.org/ns/did/v1",
+    "https://trail-protocol.org/ns/did/v1"
+  ],
+  "id": "did:trail:agent:example-gmbh-de-support-bot-v2",
+  "controller": "did:trail:org:example-gmbh-de",
+  "trail:aiSystemType": "agent",
+  "trail:euAiActRiskClass": "minimal",
+  "trail:parentOrganization": "did:trail:org:example-gmbh-de",
+  "trail:TrailCertificationStatus": "active",
+  "verificationMethod": [
+    {
+      "id": "did:trail:agent:example-gmbh-de-support-bot-v2#key-1",
+      "type": "JsonWebKey2020",
+      "controller": "did:trail:agent:example-gmbh-de-support-bot-v2",
+      "publicKeyJwk": {
+        "kty": "OKP",
+        "crv": "Ed25519",
+        "x": "SL0q3Ldb2_XtIiR2fwWoXL97uZa5tKdXxO__fwXBmxM"
+      }
+    }
+  ],
+  "authentication": ["did:trail:agent:example-gmbh-de-support-bot-v2#key-1"],
+  "assertionMethod": ["did:trail:agent:example-gmbh-de-support-bot-v2#key-1"],
+  "service": [
+    {
+      "id": "did:trail:agent:example-gmbh-de-support-bot-v2#trail-registry",
+      "type": "TrailRegistryService",
+      "serviceEndpoint": "https://registry.trail-protocol.org/1.0/identifiers/did:trail:agent:example-gmbh-de-support-bot-v2"
+    }
+  ]
+}

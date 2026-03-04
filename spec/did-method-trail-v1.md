@@ -55,12 +55,15 @@ This document is a **Draft** specification submitted for registration in the [W3
    - 7.4 [EU AI Act Alignment](#74-eu-ai-act-alignment)
 8. [Security Considerations](#8-security-considerations)
    - 8.1 [Key Security](#81-key-security)
-   - 8.2 [PEPPER Management](#82-pepper-management)
+   - 8.2 [Crypto Agility](#82-crypto-agility)
    - 8.3 [Registry Availability](#83-registry-availability)
    - 8.4 [Replay Attack Prevention](#84-replay-attack-prevention)
    - 8.5 [Man-in-the-Middle Attacks](#85-man-in-the-middle-attacks)
    - 8.6 [Revocation Timeliness](#86-revocation-timeliness)
    - 8.7 [Key Recovery](#87-key-recovery)
+   - 8.8 [Key Rotation Protocol](#88-key-rotation-protocol)
+   - 8.9 [Specification Versioning](#89-specification-versioning)
+   - 8.10 [Revocation Roadmap](#810-revocation-roadmap)
 9. [Privacy Considerations](#9-privacy-considerations)
 10. [Reference Implementation](#10-reference-implementation)
 11. [Governance](#11-governance)
@@ -1010,14 +1013,60 @@ TRAIL provides technical infrastructure that organizations can use to support th
 - The TRAIL Protocol RECOMMENDS using PKCS#11-compatible HSMs (e.g., AWS CloudHSM, Azure Dedicated HSM)
 - Organizations MUST implement at least one key recovery mechanism as defined in §8.7
 
-### 8.2 PEPPER Management
+### 8.2 Crypto Agility
 
-The TRAIL Registry uses HMAC-SHA256 with a server-side PEPPER for additional integrity protection of DID Documents at rest. PEPPER management requirements:
+The TRAIL Protocol is designed for cryptographic agility — the ability to migrate to new cryptographic algorithms without breaking existing deployments.
 
-- PEPPER secrets MUST be stored separately from DID Document data (HSM recommended)
-- PEPPER rotation MUST occur every 90 days minimum
-- Upon PEPPER rotation, all affected HMAC values MUST be recomputed
-- PEPPER recovery procedures MUST be documented and tested quarterly
+#### 8.2.1 Supported Cryptosuites
+
+All TRAIL implementations MUST support at least the following cryptosuite:
+
+| Cryptosuite ID | Algorithm | Canonicalization | Key Type | Status |
+|---|---|---|---|---|
+| `eddsa-jcs-2023` | Ed25519 | JCS (RFC 8785) | OKP (Ed25519) | **Active** |
+
+Additional cryptosuites MAY be added to the `SUPPORTED_CRYPTOSUITES` registry in future specification versions.
+
+#### 8.2.2 DID Document Declaration
+
+DID Documents MUST declare their supported cryptosuites using the `trail:supportedCryptosuites` property:
+
+```json
+{
+  "trail:supportedCryptosuites": ["eddsa-jcs-2023"]
+}
+```
+
+Verifiers SHOULD check that the `cryptosuite` field of any `DataIntegrityProof` is listed in the document's `trail:supportedCryptosuites` array.
+
+#### 8.2.3 Migration Path
+
+When a new cryptosuite is added:
+
+1. The new suite is added to the specification with status `active`
+2. Implementations MUST add the new suite to their `trail:supportedCryptosuites` array
+3. A deprecation notice is published for any outgoing suite with a minimum 180-day transition window
+4. After the transition window, the deprecated suite status changes to `deprecated`
+5. Implementations SHOULD still verify `deprecated` proofs but MUST NOT create new proofs with deprecated suites
+
+#### 8.2.4 Reference Implementation
+
+The `createProof()` function in `@trailprotocol/core` accepts an explicit `cryptosuite` parameter:
+
+```typescript
+import { createProof, isSupportedCryptosuite } from '@trailprotocol/core';
+
+// Default (eddsa-jcs-2023)
+const proof = createProof(document, privateKey, verificationMethod);
+
+// Explicit cryptosuite selection
+const proof = createProof(document, privateKey, verificationMethod, 'assertionMethod', 'eddsa-jcs-2023');
+
+// Runtime validation
+if (isSupportedCryptosuite(suiteName)) {
+  // safe to use
+}
+```
 
 ### 8.3 Registry Availability
 
@@ -1136,6 +1185,76 @@ For organizations in regulated industries (e.g., financial services, healthcare)
 
 Key escrow is OPTIONAL and MUST NOT be required for standard TRAIL registration.
 
+### 8.8 Key Rotation Protocol
+
+Key rotation allows an org or agent DID to update its verification key without changing its identifier. This is essential for key hygiene, post-compromise recovery, and long-term identity continuity.
+
+#### 8.8.1 Rotation Mechanics
+
+When a key is rotated:
+
+1. A new verification method (`#key-N+1`) is generated and added to the DID Document
+2. The `authentication` and `assertionMethod` arrays are updated to reference only the new key
+3. The previous verification method is **retained** in the `verificationMethod` array for historical proof verification
+4. Rotation metadata (previous key ID, new key ID, rotation timestamp) is recorded
+
+```typescript
+import { createDidDocument, rotateKey, generateKeyPair } from '@trailprotocol/core';
+
+const keys1 = generateKeyPair();
+const doc = createDidDocument(did, keys1, { mode: 'org' });
+
+// Rotate to a new key
+const keys2 = generateKeyPair();
+const { document: rotated, rotationMetadata } = rotateKey(doc, keys2);
+// rotated.verificationMethod.length === 2 (old + new)
+// rotated.authentication === ['did:trail:org:...#key-2']
+```
+
+#### 8.8.2 Constraints
+
+- Self-mode DIDs (`did:trail:self:`) MUST NOT use key rotation because their identifier is derived from the public key. A new self-mode DID MUST be created instead.
+- Org and agent mode DIDs MAY rotate keys without limit.
+- Verifiers SHOULD accept proofs signed by any non-revoked key listed in the `verificationMethod` array.
+- The Registry MUST record the full key rotation history for audit purposes.
+
+#### 8.8.3 Rotation Best Practices
+
+- RECOMMENDED rotation interval: every 12 months, or immediately upon suspected compromise
+- Organizations SHOULD implement automated rotation policies
+- Each rotation SHOULD be signed by the **current** active key as authorization
+
+### 8.9 Specification Versioning
+
+DID Documents MUST include a `trail:specVersion` property indicating the specification version they conform to.
+
+```json
+{
+  "trail:specVersion": "1.1.0"
+}
+```
+
+This enables verifiers to apply the correct validation rules for the document format and allows the ecosystem to evolve without breaking backwards compatibility. The version follows [Semantic Versioning 2.0.0](https://semver.org/):
+
+- **Major** version: breaking changes to the DID Document structure
+- **Minor** version: new features that are backwards-compatible
+- **Patch** version: clarifications, editorial fixes
+
+Implementations MUST reject DID Documents whose major version exceeds the implementation's supported major version. Implementations SHOULD accept documents with a higher minor version (unknown properties SHOULD be ignored).
+
+### 8.10 Revocation Roadmap
+
+> **Status: Planned** — Credential revocation is a critical feature that requires registry infrastructure. The following design is specified for implementation when the TRAIL Registry reaches operational status.
+
+The TRAIL Protocol will implement credential revocation using the [W3C Status List 2021](https://www.w3.org/TR/vc-status-list/) specification:
+
+- Each issuer maintains a bitstring-based status list
+- Credential status is checked via the `credentialStatus` property in the VC
+- Status lists are published at deterministic URLs derived from the issuer DID
+- Verifiers MUST check revocation status before accepting a credential
+
+Until the registry is operational, self-mode credentials (Tier 0) have no revocation mechanism — they are valid as long as the underlying key material is under the controller's authority.
+
 ---
 
 ## 9. Privacy Considerations
@@ -1189,9 +1308,13 @@ import {
   generateKeyPair,
   createSelfDid,
   createOrgDid,
+  createDidDocument,
+  rotateKey,
   TrailResolver,
   createSelfSignedCredential,
   verifyCredential,
+  isSupportedCryptosuite,
+  SPEC_VERSION,
 } from '@trailprotocol/core';
 
 // Generate a new Ed25519 key pair
@@ -1205,10 +1328,25 @@ const orgDid = createOrgDid('ACME Corporation', keys.publicKeyMultibase);
 console.log(selfDid);  // "did:trail:self:z6Mk..."
 console.log(orgDid);   // "did:trail:org:acme-a7f3b2c1e9d0"
 
+// DID Documents include specVersion and supportedCryptosuites
+const doc = createDidDocument(orgDid, keys, { mode: 'org' });
+console.log(doc['trail:specVersion']);           // "1.1.0"
+console.log(doc['trail:supportedCryptosuites']); // ["eddsa-jcs-2023"]
+
+// Key rotation (org/agent only — self-mode derives DID from key)
+const newKeys = generateKeyPair();
+const { document: rotated, rotationMetadata } = rotateKey(doc, newKeys);
+console.log(rotated.verificationMethod.length);  // 2 (old + new)
+console.log(rotated.authentication);             // ["did:trail:org:...#key-2"]
+
 // Resolve a self-signed DID (offline, no network)
 const resolver = new TrailResolver();
 const result = await resolver.resolve(selfDid);
 console.log(result.didDocument);
+
+// Crypto agility: validate cryptosuites at runtime
+console.log(isSupportedCryptosuite('eddsa-jcs-2023')); // true
+console.log(isSupportedCryptosuite('unknown-suite'));   // false
 
 // Create and verify a Verifiable Credential
 const vc = createSelfSignedCredential(
@@ -1492,6 +1630,10 @@ This release addresses 9 critical improvements identified during community revie
 | 7 | **Added Governance section** — New §11 covering governance evolution (3 phases), dispute resolution with revocation appeals process, registry operator requirements, and change management. | §11 (new), §6.4.2 |
 | 8 | **Added Key Recovery mechanisms** — New §8.7 defining four recovery options: multi-controller, social recovery (M-of-N threshold), registry-assisted recovery, and optional key escrow. | §8.1, §8.7 (new), §5.2 |
 | 9 | **Rewrote Reference Implementation** — Removed fictional package references. Replaced with `@trailprotocol/core` (actual package under development). Universal Resolver driver marked as planned. | §10 (rewritten) |
+| 10 | **Added Crypto Agility** — New §8.2 defining the `SUPPORTED_CRYPTOSUITES` registry, DID Document `trail:supportedCryptosuites` declaration, and migration path for future algorithm transitions. `createProof()` now accepts an explicit `cryptosuite` parameter. | §8.2 (rewritten) |
+| 11 | **Added Key Rotation Protocol** — New §8.8 specifying key rotation mechanics for org/agent DIDs. Previous keys are retained for historical verification. Self-mode DIDs cannot rotate (key = identifier). | §8.8 (new) |
+| 12 | **Added Specification Versioning** — New §8.9. DID Documents now include `trail:specVersion` for backwards-compatible evolution. Follows Semantic Versioning 2.0.0. | §8.9 (new) |
+| 13 | **Added Revocation Roadmap** — New §8.10 defining the planned W3C Status List 2021 integration for credential revocation. | §8.10 (new) |
 
 ### v1.0.0-draft (2026-03-01)
 
@@ -1509,6 +1651,10 @@ This release addresses 9 critical improvements identified during community revie
 - [RFC8037] IETF. *CFRG Elliptic Curves for JOSE and COSE*. https://www.rfc-editor.org/rfc/rfc8037
 - [RFC7517] IETF. *JSON Web Key (JWK)*. https://www.rfc-editor.org/rfc/rfc7517
 - [RFC9421] IETF. *HTTP Message Signatures*. https://www.rfc-editor.org/rfc/rfc9421
+- [RFC8785] IETF. *JSON Canonicalization Scheme (JCS)*. https://www.rfc-editor.org/rfc/rfc8785
+- [RFC8032] IETF. *Edwards-Curve Digital Signature Algorithm (EdDSA)*. https://www.rfc-editor.org/rfc/rfc8032
+- [DI-EDDSA] W3C CCG. *Data Integrity EdDSA Cryptosuites v1.0*. https://www.w3.org/TR/vc-di-eddsa/
+- [SEMVER] Preston-Werner, T. *Semantic Versioning 2.0.0*. https://semver.org/
 - [RFC2119] IETF. *Key words for use in RFCs*. https://www.rfc-editor.org/rfc/rfc2119
 - [STATUS-LIST-2021] W3C CCG. *Status List 2021*. https://www.w3.org/TR/vc-status-list/
 

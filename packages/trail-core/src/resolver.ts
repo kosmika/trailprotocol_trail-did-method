@@ -1,6 +1,8 @@
 import { decodeMultibase } from './base58';
 import { parseTrailDid } from './did';
 import type { DidDocument, DidResolutionResult } from './types';
+import { SUPPORTED_CRYPTOSUITES } from './types';
+import { SPEC_VERSION } from './document';
 
 export class TrailResolver {
   private registryEndpoint?: string;
@@ -53,6 +55,10 @@ export class TrailResolver {
       id: did,
       'trail:trailMode': 'self-signed',
       'trail:trailTrustTier': 0,
+      'trail:specVersion': SPEC_VERSION,
+      'trail:supportedCryptosuites': SUPPORTED_CRYPTOSUITES
+        .filter(s => s.status === 'active')
+        .map(s => s.id),
       verificationMethod: [
         {
           id: keyId,

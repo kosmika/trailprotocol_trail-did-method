@@ -4,9 +4,9 @@
 
 export { generateKeyPair, publicKeyFromMultibase } from './keygen';
 export { createSelfDid, createOrgDid, createAgentDid, parseTrailDid, normalizeSlug, computeTrailHash } from './did';
-export { createDidDocument } from './document';
+export { createDidDocument, rotateKey, SPEC_VERSION } from './document';
 export { TrailResolver, extractPublicKeyFromSelfDid } from './resolver';
-export { createProof, verifyProof } from './proof';
+export { createProof, verifyProof, isSupportedCryptosuite, DEFAULT_CRYPTOSUITE } from './proof';
 export { createSelfSignedCredential, verifyCredential } from './credential';
 export { encodeMultibase, decodeMultibase } from './base58';
 export { jcsCanonicalizeToString, jcsCanonicalizeToBuffer } from './jcs';
@@ -21,4 +21,8 @@ export type {
   DataIntegrityProof,
   VerifiableCredential,
   RecoveryPolicy,
+  SupportedCryptosuite,
 } from './types';
+
+export { SUPPORTED_CRYPTOSUITES } from './types';
+export type { KeyRotationMetadata } from './document';

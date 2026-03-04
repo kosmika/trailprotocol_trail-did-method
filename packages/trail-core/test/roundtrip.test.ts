@@ -2,9 +2,10 @@ import { describe, it } from 'node:test';
 import * as assert from 'node:assert/strict';
 import { generateKeyPair } from '../src/keygen';
 import { createSelfDid, createOrgDid, createAgentDid, parseTrailDid } from '../src/did';
-import { createDidDocument } from '../src/document';
+import { createDidDocument, rotateKey, SPEC_VERSION } from '../src/document';
 import { TrailResolver } from '../src/resolver';
-import { createProof, verifyProof } from '../src/proof';
+import { createProof, verifyProof, isSupportedCryptosuite, DEFAULT_CRYPTOSUITE } from '../src/proof';
+import { SUPPORTED_CRYPTOSUITES } from '../src/types';
 import { createSelfSignedCredential, verifyCredential } from '../src/credential';
 import { encode, decode, encodeMultibase, decodeMultibase } from '../src/base58';
 import { jcsCanonicalizeToString } from '../src/jcs';
@@ -397,5 +398,187 @@ describe('End-to-End Roundtrip', () => {
     assert.ok(proofValid);
 
     console.log('✓ Full roundtrip: keygen → DID → resolve → VC sign → VC verify');
+  });
+});
+
+describe('Crypto Agility', () => {
+  it('DEFAULT_CRYPTOSUITE is eddsa-jcs-2023', () => {
+    assert.strictEqual(DEFAULT_CRYPTOSUITE, 'eddsa-jcs-2023');
+  });
+
+  it('isSupportedCryptosuite validates known suites', () => {
+    assert.ok(isSupportedCryptosuite('eddsa-jcs-2023'));
+    assert.ok(!isSupportedCryptosuite('ecdsa-rdfc-2019'));
+    assert.ok(!isSupportedCryptosuite('unknown-suite'));
+    assert.ok(!isSupportedCryptosuite(''));
+  });
+
+  it('SUPPORTED_CRYPTOSUITES registry has required fields', () => {
+    assert.ok(SUPPORTED_CRYPTOSUITES.length >= 1);
+    for (const suite of SUPPORTED_CRYPTOSUITES) {
+      assert.ok(suite.id);
+      assert.ok(suite.algorithm);
+      assert.ok(suite.canonicalization);
+      assert.ok(suite.keyType);
+      assert.ok(['active', 'deprecated'].includes(suite.status));
+    }
+  });
+
+  it('createProof accepts explicit cryptosuite parameter', () => {
+    const keys = generateKeyPair();
+    const did = createSelfDid(keys.publicKeyMultibase);
+    const doc = { id: did, data: 'test' };
+
+    const proof = createProof(
+      doc,
+      keys.privateKeyBytes,
+      `${did}#key-1`,
+      'assertionMethod',
+      'eddsa-jcs-2023'
+    );
+
+    assert.strictEqual(proof.cryptosuite, 'eddsa-jcs-2023');
+    const valid = verifyProof(doc, proof, keys.publicKeyBytes);
+    assert.ok(valid);
+  });
+
+  it('createProof rejects unsupported cryptosuite', () => {
+    const keys = generateKeyPair();
+    const doc = { id: 'test' };
+
+    assert.throws(
+      () => createProof(doc, keys.privateKeyBytes, 'test#key-1', 'assertionMethod', 'unknown-suite' as any),
+      /Unsupported cryptosuite/
+    );
+  });
+
+  it('DID document includes supportedCryptosuites', () => {
+    const keys = generateKeyPair();
+    const did = createSelfDid(keys.publicKeyMultibase);
+    const doc = createDidDocument(did, keys, { mode: 'self' });
+
+    assert.ok(doc['trail:supportedCryptosuites']);
+    assert.ok(Array.isArray(doc['trail:supportedCryptosuites']));
+    assert.ok(doc['trail:supportedCryptosuites']!.includes('eddsa-jcs-2023'));
+  });
+});
+
+describe('Spec Version', () => {
+  it('SPEC_VERSION is 1.1.0', () => {
+    assert.strictEqual(SPEC_VERSION, '1.1.0');
+  });
+
+  it('DID document includes trail:specVersion', () => {
+    const keys = generateKeyPair();
+    const did = createSelfDid(keys.publicKeyMultibase);
+    const doc = createDidDocument(did, keys, { mode: 'self' });
+
+    assert.strictEqual(doc['trail:specVersion'], '1.1.0');
+  });
+
+  it('resolved self DID includes trail:specVersion', async () => {
+    const keys = generateKeyPair();
+    const did = createSelfDid(keys.publicKeyMultibase);
+    const resolver = new TrailResolver();
+    const result = await resolver.resolve(did);
+
+    assert.strictEqual(result.didDocument['trail:specVersion'], '1.1.0');
+  });
+
+  it('resolved self DID includes supportedCryptosuites', async () => {
+    const keys = generateKeyPair();
+    const did = createSelfDid(keys.publicKeyMultibase);
+    const resolver = new TrailResolver();
+    const result = await resolver.resolve(did);
+
+    assert.ok(result.didDocument['trail:supportedCryptosuites']);
+    assert.ok(result.didDocument['trail:supportedCryptosuites']!.includes('eddsa-jcs-2023'));
+  });
+});
+
+describe('Key Rotation', () => {
+  it('rotates key for org DID', () => {
+    const keys1 = generateKeyPair();
+    const keys2 = generateKeyPair();
+    const did = createOrgDid('Test Corp', keys1.publicKeyMultibase);
+    const doc = createDidDocument(did, keys1, { mode: 'org' });
+
+    const { document: rotated, rotationMetadata } = rotateKey(doc, keys2);
+
+    // New key is added
+    assert.strictEqual(rotated.verificationMethod.length, 2);
+    assert.strictEqual(rotated.verificationMethod[1].id, `${did}#key-2`);
+    assert.deepStrictEqual(rotated.verificationMethod[1].publicKeyJwk, keys2.publicKeyJwk);
+
+    // Old key is retained
+    assert.strictEqual(rotated.verificationMethod[0].id, `${did}#key-1`);
+    assert.deepStrictEqual(rotated.verificationMethod[0].publicKeyJwk, keys1.publicKeyJwk);
+
+    // Active key references updated
+    assert.deepStrictEqual(rotated.authentication, [`${did}#key-2`]);
+    assert.deepStrictEqual(rotated.assertionMethod, [`${did}#key-2`]);
+
+    // Metadata
+    assert.strictEqual(rotationMetadata.previousKeyId, `${did}#key-1`);
+    assert.strictEqual(rotationMetadata.newKeyId, `${did}#key-2`);
+    assert.ok(rotationMetadata.rotatedAt);
+    assert.ok(rotationMetadata.previousKeyRetained);
+  });
+
+  it('rotates key for agent DID', () => {
+    const keys1 = generateKeyPair();
+    const keys2 = generateKeyPair();
+    const did = createAgentDid('Sales Bot', keys1.publicKeyMultibase);
+    const doc = createDidDocument(did, keys1, { mode: 'agent' });
+
+    const { document: rotated } = rotateKey(doc, keys2);
+    assert.strictEqual(rotated.verificationMethod.length, 2);
+    assert.deepStrictEqual(rotated.authentication, [`${did}#key-2`]);
+  });
+
+  it('rejects key rotation for self DID', () => {
+    const keys1 = generateKeyPair();
+    const keys2 = generateKeyPair();
+    const did = createSelfDid(keys1.publicKeyMultibase);
+    const doc = createDidDocument(did, keys1, { mode: 'self' });
+
+    assert.throws(
+      () => rotateKey(doc, keys2),
+      /not supported for self-mode/
+    );
+  });
+
+  it('supports multiple rotations', () => {
+    const keys1 = generateKeyPair();
+    const keys2 = generateKeyPair();
+    const keys3 = generateKeyPair();
+    const did = createOrgDid('Multi Rotate Corp', keys1.publicKeyMultibase);
+    const doc = createDidDocument(did, keys1, { mode: 'org' });
+
+    const { document: rotated1 } = rotateKey(doc, keys2);
+    const { document: rotated2, rotationMetadata } = rotateKey(rotated1, keys3);
+
+    assert.strictEqual(rotated2.verificationMethod.length, 3);
+    assert.deepStrictEqual(rotated2.authentication, [`${did}#key-3`]);
+    assert.strictEqual(rotationMetadata.previousKeyId, `${did}#key-2`);
+    assert.strictEqual(rotationMetadata.newKeyId, `${did}#key-3`);
+  });
+
+  it('proofs signed with new key verify after rotation', () => {
+    const keys1 = generateKeyPair();
+    const keys2 = generateKeyPair();
+    const did = createOrgDid('Proof Rotate', keys1.publicKeyMultibase);
+    const doc = createDidDocument(did, keys1, { mode: 'org' });
+
+    const { document: rotated } = rotateKey(doc, keys2);
+    const testDoc = { id: did, data: 'after rotation' };
+
+    // Sign with new key
+    const proof = createProof(testDoc, keys2.privateKeyBytes, `${did}#key-2`);
+    assert.ok(verifyProof(testDoc, proof, keys2.publicKeyBytes));
+
+    // Old key proofs still verify against old key
+    const oldProof = createProof(testDoc, keys1.privateKeyBytes, `${did}#key-1`);
+    assert.ok(verifyProof(testDoc, oldProof, keys1.publicKeyBytes));
   });
 });

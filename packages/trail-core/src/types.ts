@@ -40,6 +40,8 @@ export interface DidDocument {
   'trail:trailMode'?: string;
   'trail:trailTrustTier'?: number;
   'trail:recoveryPolicy'?: RecoveryPolicy;
+  'trail:specVersion'?: string;
+  'trail:supportedCryptosuites'?: string[];
 }
 
 export interface DidResolutionResult {
@@ -48,14 +50,42 @@ export interface DidResolutionResult {
   didResolutionMetadata: Record<string, unknown>;
 }
 
+/**
+ * Supported cryptosuites for DataIntegrityProof.
+ * Currently only eddsa-jcs-2023 is implemented; this type enables crypto agility
+ * by allowing future suites to be added without breaking changes.
+ */
+export type SupportedCryptosuite = 'eddsa-jcs-2023';
+
 export interface DataIntegrityProof {
   type: 'DataIntegrityProof';
-  cryptosuite: 'eddsa-jcs-2023';
+  cryptosuite: string;
   created: string;
   verificationMethod: string;
   proofPurpose: string;
   proofValue: string;
 }
+
+/**
+ * Registry of supported cryptosuites and their metadata.
+ * Used for crypto agility: implementations MUST support at least eddsa-jcs-2023,
+ * and MAY support additional suites listed here.
+ */
+export const SUPPORTED_CRYPTOSUITES: ReadonlyArray<{
+  id: SupportedCryptosuite;
+  algorithm: string;
+  canonicalization: string;
+  keyType: string;
+  status: 'active' | 'deprecated';
+}> = [
+  {
+    id: 'eddsa-jcs-2023',
+    algorithm: 'Ed25519',
+    canonicalization: 'JCS (RFC 8785)',
+    keyType: 'OKP',
+    status: 'active',
+  },
+];
 
 export interface VerifiableCredential {
   '@context': string[];

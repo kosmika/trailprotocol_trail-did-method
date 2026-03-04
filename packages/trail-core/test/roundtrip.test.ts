@@ -7,6 +7,63 @@ import { TrailResolver } from '../src/resolver';
 import { createProof, verifyProof } from '../src/proof';
 import { createSelfSignedCredential, verifyCredential } from '../src/credential';
 import { encode, decode, encodeMultibase, decodeMultibase } from '../src/base58';
+import { jcsCanonicalizeToString } from '../src/jcs';
+
+describe('JCS (RFC 8785)', () => {
+  it('sorts object keys by UTF-16 code unit order', () => {
+    const input = { z: 1, a: 2, m: 3 };
+    assert.strictEqual(jcsCanonicalizeToString(input), '{"a":2,"m":3,"z":1}');
+  });
+
+  it('handles nested objects', () => {
+    const input = { b: { d: 1, c: 2 }, a: 3 };
+    assert.strictEqual(jcsCanonicalizeToString(input), '{"a":3,"b":{"c":2,"d":1}}');
+  });
+
+  it('handles arrays (preserves order)', () => {
+    const input = [3, 1, 2];
+    assert.strictEqual(jcsCanonicalizeToString(input), '[3,1,2]');
+  });
+
+  it('handles null and booleans', () => {
+    assert.strictEqual(jcsCanonicalizeToString(null), 'null');
+    assert.strictEqual(jcsCanonicalizeToString(true), 'true');
+    assert.strictEqual(jcsCanonicalizeToString(false), 'false');
+  });
+
+  it('handles -0 as 0', () => {
+    assert.strictEqual(jcsCanonicalizeToString(-0), '0');
+  });
+
+  it('escapes control characters in strings', () => {
+    assert.strictEqual(jcsCanonicalizeToString('a\nb'), '"a\\nb"');
+    assert.strictEqual(jcsCanonicalizeToString('a\tb'), '"a\\tb"');
+  });
+
+  it('skips undefined properties', () => {
+    const input = { a: 1, b: undefined, c: 3 };
+    assert.strictEqual(jcsCanonicalizeToString(input), '{"a":1,"c":3}');
+  });
+
+  it('rejects NaN and Infinity', () => {
+    assert.throws(() => jcsCanonicalizeToString(NaN), /NaN/);
+    assert.throws(() => jcsCanonicalizeToString(Infinity), /Infinity/);
+  });
+
+  it('produces stable output for DID documents', () => {
+    const doc = {
+      '@context': ['https://www.w3.org/ns/did/v1'],
+      id: 'did:trail:self:z6MkTest',
+      verificationMethod: [{ id: '#key-1', type: 'JsonWebKey2020' }],
+    };
+    const result1 = jcsCanonicalizeToString(doc);
+    const result2 = jcsCanonicalizeToString(doc);
+    assert.strictEqual(result1, result2);
+    // Keys should be sorted: @context < id < verificationMethod
+    assert.ok(result1.indexOf('"@context"') < result1.indexOf('"id"'));
+    assert.ok(result1.indexOf('"id"') < result1.indexOf('"verificationMethod"'));
+  });
+});
 
 describe('Base58', () => {
   it('round-trips bytes', () => {
@@ -64,12 +121,12 @@ describe('DID Construction', () => {
     const did = createOrgDid('ACME Corporation GmbH', keys.publicKeyMultibase);
     // normalizeSlug removes "GmbH" and "Corporation" as legal suffixes → "acme"
     assert.ok(did.startsWith('did:trail:org:acme-'));
-    // Hash suffix is 8 hex chars
+    // Hash suffix is 12 hex chars
     const parts = did.split(':');
     const subject = parts[3];
     const hashPart = subject.split('-').pop()!;
-    assert.strictEqual(hashPart.length, 8);
-    assert.ok(/^[0-9a-f]{8}$/.test(hashPart));
+    assert.strictEqual(hashPart.length, 12);
+    assert.ok(/^[0-9a-f]{12}$/.test(hashPart));
   });
 
   it('creates agent DID with hash suffix', () => {
@@ -100,7 +157,7 @@ describe('DID Construction', () => {
     assert.strictEqual(parsed.mode, 'org');
     assert.ok(parsed.slug);
     assert.ok(parsed.hash);
-    assert.strictEqual(parsed.hash!.length, 8);
+    assert.strictEqual(parsed.hash!.length, 12);
   });
 
   it('rejects invalid DID format', () => {
@@ -136,7 +193,7 @@ describe('DID Document', () => {
   it('creates agent DID document with parent reference', () => {
     const keys = generateKeyPair();
     const did = createAgentDid('Bot', keys.publicKeyMultibase);
-    const parentDid = 'did:trail:org:parent-corp-abcd1234';
+    const parentDid = 'did:trail:org:parent-corp-abcd1234e5f6';
     const doc = createDidDocument(did, keys, {
       mode: 'agent',
       parentOrganization: parentDid,
@@ -186,7 +243,7 @@ describe('DataIntegrityProof', () => {
     );
 
     assert.strictEqual(proof.type, 'DataIntegrityProof');
-    assert.strictEqual(proof.cryptosuite, 'eddsa-2022');
+    assert.strictEqual(proof.cryptosuite, 'eddsa-jcs-2023');
     assert.strictEqual(proof.verificationMethod, `${did}#key-0`);
     assert.ok(proof.proofValue.startsWith('z'));
 

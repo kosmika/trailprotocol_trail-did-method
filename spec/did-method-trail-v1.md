@@ -70,8 +70,9 @@ This document is a **Draft** specification submitted for registration in the [W3
     - 11.4 [Change Management](#114-change-management)
 12. [Appendix A — JSON Registry Entry](#12-appendix-a--json-registry-entry)
 13. [Appendix B — Example DID Documents](#13-appendix-b--example-did-documents)
-14. [Changelog](#14-changelog)
-15. [References](#15-references)
+14. [Appendix C — Test Vectors](#14-appendix-c--test-vectors)
+15. [Changelog](#15-changelog)
+16. [References](#16-references)
 
 ---
 
@@ -187,15 +188,19 @@ Federation is a SHOULD-level requirement. A conforming `did:trail` implementatio
 The method-specific identifier (MSI) for `did:trail` has the following ABNF syntax:
 
 ```abnf
-did-trail          = "did:trail:" trail-identifier
-trail-identifier   = trail-mode ":" trail-subject
-trail-mode         = "org" / "agent" / "self"
-trail-subject      = trail-slug "-" trail-hash
-trail-slug         = 1*(ALPHA / DIGIT / "-")
-trail-hash         = 8HEXDIG
+did-trail              = "did:trail:" trail-identifier
+trail-identifier       = trail-org-id / trail-agent-id / trail-self-id
+trail-org-id           = "org:" trail-slug "-" trail-hash
+trail-agent-id         = "agent:" trail-slug "-" trail-hash
+trail-self-id          = "self:" trail-multibase
+trail-slug             = 1*(ALPHA / DIGIT / "-")
+trail-hash             = 12HEXDIG
+trail-multibase        = "z" 1*(BASE58CHAR)
+BASE58CHAR             = %x31-39 / %x41-48 / %x4A-4E / %x50-5A / %x61-6B / %x6D-7A
+                         ; 1-9 A-H J-N P-Z a-k m-z (no 0, I, O, l)
 ```
 
-The `trail-hash` component is a content-addressable suffix derived from the combination of the slug and the subject's public key material (see §4.5.2). For `self` mode, the subject is the multibase-encoded public key and no additional hash suffix is required, as the identifier is already content-addressable.
+For `org` and `agent` modes, the `trail-hash` component is a content-addressable suffix derived from the combination of the slug and the subject's public key material (see §4.5.2). For `self` mode, the subject is the multibase-encoded (base58btc, z-prefix) Ed25519 public key — no additional hash suffix is required, as the identifier is inherently content-addressable.
 
 ### 4.2 Identifier Modes
 
@@ -205,7 +210,7 @@ The `trail-hash` component is a content-addressable suffix derived from the comb
 Identifies a legal entity (company, institution) operating AI systems.
 
 ```
-did:trail:org:acme-corp-eu-a7f3b2c1
+did:trail:org:acme-corp-eu-a7f3b2c1e9d0
 did:trail:org:deutschebank-ai-desk-e2f4a6b8
 ```
 
@@ -213,8 +218,8 @@ did:trail:org:deutschebank-ai-desk-e2f4a6b8
 Identifies a specific AI agent or AI-powered service instance operated by an organization. MUST be associated with a parent `org` DID.
 
 ```
-did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7
-did:trail:agent:db-contract-analysis-prod-001-c8d9e0f1
+did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7b8c3
+did:trail:agent:db-contract-analysis-prod-001-c8d9e0f1a2b4
 ```
 
 #### `self` — Local Verification Mode
@@ -235,17 +240,17 @@ did:trail:self:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK
 
 ### 4.3 Identifier Constraints
 
-- The `trail-subject` component MUST be globally unique within its mode namespace
-- `trail-subject` MUST NOT exceed 128 characters
-- `trail-subject` MUST use only URL-safe characters (ALPHA, DIGIT, hyphen)
+- The method-specific identifier MUST be globally unique within its mode namespace
+- For `org` and `agent` modes: the slug-hash subject MUST NOT exceed 128 characters and MUST use only URL-safe characters (ALPHA, DIGIT, hyphen)
+- For `self` mode: the subject MUST be a valid multibase-encoded (base58btc, z-prefix) Ed25519 public key (exactly 32 bytes decoded)
 - Organization identifiers (`org` mode) MUST match a verified legal entity name or registered business identifier via the slug component
-- The `trail-hash` suffix MUST be computed as specified in §4.5.2
+- The `trail-hash` suffix (for `org` and `agent` modes) MUST be computed as specified in §4.5.2
 
 ### 4.4 Example DIDs
 
 ```
-did:trail:org:acme-corp-eu-a7f3b2c1
-did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7
+did:trail:org:acme-corp-eu-a7f3b2c1e9d0
+did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7b8c3
 did:trail:self:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK
 ```
 
@@ -280,13 +285,13 @@ For `agent` mode, the slug SHOULD include the parent organization slug as a pref
 The `trail-hash` is computed as follows:
 
 ```
-trail-hash = SHA-256(slug + ":" + publicKeyMultibase)[0:8]
+trail-hash = SHA-256(slug + ":" + publicKeyMultibase)[0:12]
 ```
 
 Where:
 - `slug` is the normalized slug as defined in §4.5.1
 - `publicKeyMultibase` is the multibase-encoded (base58btc) Ed25519 public key of the subject
-- `[0:8]` denotes the first 8 characters (4 bytes) of the lowercase hexadecimal digest
+- `[0:12]` denotes the first 12 characters (6 bytes) of the lowercase hexadecimal digest
 
 **Example computation:**
 
@@ -294,9 +299,9 @@ Where:
 slug              = "acme-corp-eu"
 publicKeyMultibase = "z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
 input             = "acme-corp-eu:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
-SHA-256(input)    = "a7f3b2c1..."  (truncated)
-trail-hash        = "a7f3b2c1"
-DID               = "did:trail:org:acme-corp-eu-a7f3b2c1"
+SHA-256(input)    = "a7f3b2c1e9d0..."  (truncated)
+trail-hash        = "a7f3b2c1e9d0"
+DID               = "did:trail:org:acme-corp-eu-a7f3b2c1e9d0"
 ```
 
 This content-addressable suffix:
@@ -328,12 +333,12 @@ A `did:trail` DID Document MUST conform to the W3C DID Core 1.0 DID Document dat
     "https://www.w3.org/ns/did/v1",
     "https://trailprotocol.org/ns/did/v1"
   ],
-  "id": "did:trail:org:acme-corp-eu-a7f3b2c1",
+  "id": "did:trail:org:acme-corp-eu-a7f3b2c1e9d0",
   "verificationMethod": [
     {
-      "id": "did:trail:org:acme-corp-eu-a7f3b2c1#key-1",
+      "id": "did:trail:org:acme-corp-eu-a7f3b2c1e9d0#key-1",
       "type": "JsonWebKey2020",
-      "controller": "did:trail:org:acme-corp-eu-a7f3b2c1",
+      "controller": "did:trail:org:acme-corp-eu-a7f3b2c1e9d0",
       "publicKeyJwk": {
         "kty": "OKP",
         "crv": "Ed25519",
@@ -342,19 +347,19 @@ A `did:trail` DID Document MUST conform to the W3C DID Core 1.0 DID Document dat
     }
   ],
   "authentication": [
-    "did:trail:org:acme-corp-eu-a7f3b2c1#key-1"
+    "did:trail:org:acme-corp-eu-a7f3b2c1e9d0#key-1"
   ],
   "assertionMethod": [
-    "did:trail:org:acme-corp-eu-a7f3b2c1#key-1"
+    "did:trail:org:acme-corp-eu-a7f3b2c1e9d0#key-1"
   ],
   "service": [
     {
-      "id": "did:trail:org:acme-corp-eu-a7f3b2c1#trail-registry",
+      "id": "did:trail:org:acme-corp-eu-a7f3b2c1e9d0#trail-registry",
       "type": "TrailRegistryService",
-      "serviceEndpoint": "https://registry.trailprotocol.org/1.0/identifiers/did:trail:org:acme-corp-eu-a7f3b2c1"
+      "serviceEndpoint": "https://registry.trailprotocol.org/1.0/identifiers/did:trail:org:acme-corp-eu-a7f3b2c1e9d0"
     },
     {
-      "id": "did:trail:org:acme-corp-eu-a7f3b2c1#ai-policy",
+      "id": "did:trail:org:acme-corp-eu-a7f3b2c1e9d0#ai-policy",
       "type": "TrailAIPolicyService",
       "serviceEndpoint": "https://acme-corp.eu/.well-known/trail-ai-policy.json"
     }
@@ -387,16 +392,16 @@ The `https://trailprotocol.org/ns/did/v1` JSON-LD context defines the following 
     "https://w3id.org/security/suites/jws-2020/v1",
     "https://trailprotocol.org/ns/did/v1"
   ],
-  "id": "did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7",
+  "id": "did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7b8c3",
   "controller": [
-    "did:trail:org:acme-corp-eu-a7f3b2c1",
-    "did:trail:org:acme-corp-eu-a7f3b2c1#recovery-key-1"
+    "did:trail:org:acme-corp-eu-a7f3b2c1e9d0",
+    "did:trail:org:acme-corp-eu-a7f3b2c1e9d0#recovery-key-1"
   ],
   "verificationMethod": [
     {
-      "id": "did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7#key-1",
+      "id": "did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7b8c3#key-1",
       "type": "JsonWebKey2020",
-      "controller": "did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7",
+      "controller": "did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7b8c3",
       "publicKeyJwk": {
         "kty": "OKP",
         "crv": "Ed25519",
@@ -404,18 +409,18 @@ The `https://trailprotocol.org/ns/did/v1` JSON-LD context defines the following 
       }
     }
   ],
-  "authentication": ["did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7#key-1"],
-  "assertionMethod": ["did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7#key-1"],
+  "authentication": ["did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7b8c3#key-1"],
+  "assertionMethod": ["did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7b8c3#key-1"],
   "service": [
     {
-      "id": "did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7#trail-registry",
+      "id": "did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7b8c3#trail-registry",
       "type": "TrailRegistryService",
-      "serviceEndpoint": "https://registry.trailprotocol.org/1.0/identifiers/did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7"
+      "serviceEndpoint": "https://registry.trailprotocol.org/1.0/identifiers/did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7b8c3"
     }
   ],
   "trail:aiSystemType": "agent",
   "trail:euAiActRiskClass": "limited",
-  "trail:parentOrganization": "did:trail:org:acme-corp-eu-a7f3b2c1",
+  "trail:parentOrganization": "did:trail:org:acme-corp-eu-a7f3b2c1e9d0",
   "trail:TrailCertificationStatus": "active",
   "trail:trailTrustTier": 1,
   "trail:recoveryPolicy": {
@@ -423,7 +428,7 @@ The `https://trailprotocol.org/ns/did/v1` JSON-LD context defines the following 
     "threshold": 3,
     "totalGuardians": 5,
     "guardians": [
-      "did:trail:org:acme-corp-eu-a7f3b2c1#recovery-key-1",
+      "did:trail:org:acme-corp-eu-a7f3b2c1e9d0#recovery-key-1",
       "did:trail:org:trusted-partner-a-c3d4e5f6#key-1",
       "did:trail:org:trusted-partner-b-f6a7b8c9#key-1",
       "did:trail:org:legal-counsel-d-a1b2c3d4#key-1",
@@ -480,18 +485,18 @@ Submit the DID Document to the TRAIL Registry via authenticated HTTP POST:
 ```http
 POST https://registry.trailprotocol.org/1.0/register
 Content-Type: application/json
-Authorization: DIDAuth did:trail:org:acme-corp-eu-a7f3b2c1
-Signature-Input: sig1=("@method" "@target-uri" "content-type" "content-digest");created=1709510400;keyid="did:trail:org:acme-corp-eu-a7f3b2c1#key-1";alg="ed25519"
+Authorization: DIDAuth did:trail:org:acme-corp-eu-a7f3b2c1e9d0
+Signature-Input: sig1=("@method" "@target-uri" "content-type" "content-digest");created=1709510400;keyid="did:trail:org:acme-corp-eu-a7f3b2c1e9d0#key-1";alg="ed25519"
 Signature: sig1=:BASE64_ENCODED_SIGNATURE:
 
 {
-  "did": "did:trail:org:acme-corp-eu-a7f3b2c1",
+  "did": "did:trail:org:acme-corp-eu-a7f3b2c1e9d0",
   "didDocument": { ... },
   "proof": {
     "type": "DataIntegrityProof",
-    "cryptosuite": "eddsa-2022",
+    "cryptosuite": "eddsa-jcs-2023",
     "created": "2026-03-01T00:00:00Z",
-    "verificationMethod": "did:trail:org:acme-corp-eu-a7f3b2c1#key-1",
+    "verificationMethod": "did:trail:org:acme-corp-eu-a7f3b2c1e9d0#key-1",
     "proofPurpose": "assertionMethod",
     "proofValue": "z..."
   }
@@ -538,7 +543,7 @@ A `did:trail` DID resolver MUST perform the following steps:
 **HTTP Resolution (org/agent mode):**
 
 ```http
-GET https://registry.trailprotocol.org/1.0/identifiers/did:trail:org:acme-corp-eu-a7f3b2c1
+GET https://registry.trailprotocol.org/1.0/identifiers/did:trail:org:acme-corp-eu-a7f3b2c1e9d0
 Accept: application/did+ld+json
 ```
 
@@ -608,29 +613,29 @@ The resolver reconstructs the DID Document deterministically from the embedded p
 
 | DID URL | Dereferences to |
 |---------|----------------|
-| `did:trail:org:acme-corp-eu-a7f3b2c1#key-1` | The verification method with id `#key-1` |
-| `did:trail:org:acme-corp-eu-a7f3b2c1#trail-registry` | The TrailRegistryService endpoint |
-| `did:trail:org:acme-corp-eu-a7f3b2c1#ai-policy` | The AI Policy service endpoint |
-| `did:trail:org:acme-corp-eu-a7f3b2c1?versionId=2026-03-01` | DID Document as of the specified date |
+| `did:trail:org:acme-corp-eu-a7f3b2c1e9d0#key-1` | The verification method with id `#key-1` |
+| `did:trail:org:acme-corp-eu-a7f3b2c1e9d0#trail-registry` | The TrailRegistryService endpoint |
+| `did:trail:org:acme-corp-eu-a7f3b2c1e9d0#ai-policy` | The AI Policy service endpoint |
+| `did:trail:org:acme-corp-eu-a7f3b2c1e9d0?versionId=2026-03-01` | DID Document as of the specified date |
 
 ### 6.3 Update
 
 DID Document updates require an authenticated signed update request from the DID controller:
 
 ```http
-PUT https://registry.trailprotocol.org/1.0/identifiers/did:trail:org:acme-corp-eu-a7f3b2c1
+PUT https://registry.trailprotocol.org/1.0/identifiers/did:trail:org:acme-corp-eu-a7f3b2c1e9d0
 Content-Type: application/json
-Authorization: DIDAuth did:trail:org:acme-corp-eu-a7f3b2c1
-Signature-Input: sig1=("@method" "@target-uri" "content-type" "content-digest");created=1711929600;keyid="did:trail:org:acme-corp-eu-a7f3b2c1#key-1";alg="ed25519"
+Authorization: DIDAuth did:trail:org:acme-corp-eu-a7f3b2c1e9d0
+Signature-Input: sig1=("@method" "@target-uri" "content-type" "content-digest");created=1711929600;keyid="did:trail:org:acme-corp-eu-a7f3b2c1e9d0#key-1";alg="ed25519"
 Signature: sig1=:BASE64_ENCODED_SIGNATURE:
 
 {
   "didDocument": { ...updated document... },
   "proof": {
     "type": "DataIntegrityProof",
-    "cryptosuite": "eddsa-2022",
+    "cryptosuite": "eddsa-jcs-2023",
     "created": "2026-04-01T00:00:00Z",
-    "verificationMethod": "did:trail:org:acme-corp-eu-a7f3b2c1#key-1",
+    "verificationMethod": "did:trail:org:acme-corp-eu-a7f3b2c1e9d0#key-1",
     "proofPurpose": "authentication",
     "proofValue": "z..."
   }
@@ -639,18 +644,24 @@ Signature: sig1=:BASE64_ENCODED_SIGNATURE:
 
 **Key Rotation:** When rotating the primary identity key, the DID controller MUST include both the old proof (signed with the current key) and the new key material. Key rotation does not change the DID itself. The `trail-hash` suffix remains bound to the original public key to preserve identifier stability.
 
+**Hash and Key Rotation Semantics:** The `trail-hash` suffix in `org` and `agent` mode DIDs is computed once at creation time from `SHA-256(slug + ":" + originalPublicKeyMultibase)[0:12]`. After key rotation, the hash no longer corresponds to the current public key — it serves as a stable, unique identifier bound to the _initial_ key material. This is by design: the DID identifier remains stable across key rotations, and the hash suffix's primary purpose is collision prevention, not ongoing key binding. Verifiers MUST use the current `verificationMethod` in the DID Document (not the hash suffix) to verify signatures.
+
+**Self-Mode Key Rotation:** Self-signed DIDs (`did:trail:self:*`) encode the public key directly in the DID identifier. Key rotation in self-mode requires creating a new DID, as the identifier IS the key. This is consistent with Tier 0's design as a lightweight, ephemeral identity layer. Organizations that anticipate key rotation SHOULD use `org` or `agent` mode.
+
 **Immutable fields:** The `id` field of a DID Document MUST NOT be changed after creation.
 
 ### 6.4 Deactivate (Revoke)
 
 A DID MAY be deactivated either by the DID controller (voluntary) or by the TRAIL Registry (revocation due to policy violation).
 
+**Self-Mode Limitation:** Self-signed DIDs (`did:trail:self:*`, Tier 0) are not registered with any registry and therefore cannot be revoked or deactivated by a third party. The DID controller can stop using the associated key pair, but there is no mechanism to signal deactivation to verifiers. This is an inherent limitation of Tier 0 and one of the reasons that Tier 1/2 registration provides stronger trust guarantees. Verifiers interacting with Tier 0 DIDs SHOULD treat them as ephemeral and apply additional verification measures (e.g., challenge-response, short-lived sessions).
+
 #### 6.4.1 Controller-Initiated Deactivation
 
 ```http
-DELETE https://registry.trailprotocol.org/1.0/identifiers/did:trail:org:acme-corp-eu-a7f3b2c1
-Authorization: DIDAuth did:trail:org:acme-corp-eu-a7f3b2c1
-Signature-Input: sig1=("@method" "@target-uri");created=1709510400;keyid="did:trail:org:acme-corp-eu-a7f3b2c1#key-1";alg="ed25519"
+DELETE https://registry.trailprotocol.org/1.0/identifiers/did:trail:org:acme-corp-eu-a7f3b2c1e9d0
+Authorization: DIDAuth did:trail:org:acme-corp-eu-a7f3b2c1e9d0
+Signature-Input: sig1=("@method" "@target-uri");created=1709510400;keyid="did:trail:org:acme-corp-eu-a7f3b2c1e9d0#key-1";alg="ed25519"
 Signature: sig1=:BASE64_ENCODED_SIGNATURE:
 X-Trail-Proof: {signed-deactivation-proof}
 ```
@@ -752,7 +763,7 @@ The TRAIL Registry issues Verifiable Credentials (conforming to VC Data Model 2.
   "issuer": "did:trail:org:trail-protocol-f0e1d2c3",
   "issuanceDate": "2026-03-01T00:00:00Z",
   "credentialSubject": {
-    "id": "did:trail:org:acme-corp-eu-a7f3b2c1",
+    "id": "did:trail:org:acme-corp-eu-a7f3b2c1e9d0",
     "legalName": "ACME Corporation GmbH",
     "jurisdiction": "DE",
     "trailTrustTier": 1,
@@ -904,7 +915,7 @@ The TRAIL Registry MUST expose per-dimension scores in all resolution responses 
 To enable independent verification of trust scores, the TRAIL Registry MUST provide a raw inputs endpoint:
 
 ```http
-GET https://registry.trailprotocol.org/1.0/trust-score/did:trail:org:acme-corp-eu-a7f3b2c1/inputs
+GET https://registry.trailprotocol.org/1.0/trust-score/did:trail:org:acme-corp-eu-a7f3b2c1e9d0/inputs
 Accept: application/json
 ```
 
@@ -912,7 +923,7 @@ Accept: application/json
 
 ```json
 {
-  "did": "did:trail:org:acme-corp-eu-a7f3b2c1",
+  "did": "did:trail:org:acme-corp-eu-a7f3b2c1e9d0",
   "inputs": {
     "d1_identity": {
       "selfDeclared": true,
@@ -961,6 +972,15 @@ Accredited auditors MAY independently audit trust score inputs and publish audit
 - MUST specify the audit scope (which dimensions were audited)
 - SHOULD be published within 30 days of the audit completion
 - Contribute to the D5 (Third-Party Attestations) dimension
+
+#### 7.3.6 Trust Score Limitations
+
+The trust score model has inherent limitations that verifiers MUST be aware of:
+
+- **D3/D4 self-reporting:** Dimensions D3 (Information Provenance) and D4 (Behavioral Consistency) rely on data reported by the DID controller or their infrastructure. Without independent auditing (D5), these dimensions reflect self-attestation rather than independently verified behavior. Verifiers SHOULD weight D3/D4 lower when no third-party audit credentials (D5) are present.
+- **Tier 0 exclusion:** Self-signed DIDs (Tier 0) do not participate in the trust score system at all, as there is no registry to collect or compute scores.
+- **Gaming resistance:** The formula-based approach creates potential for strategic behavior optimization. The TRAIL Registry SHOULD implement anomaly detection for sudden score changes and MAY require minimum observation periods before scores are considered stable.
+- **D5 bootstrapping:** Early in the ecosystem, few accredited auditors may exist, limiting the practical value of D5. The protocol anticipates this through the three-phase governance model (§11.1).
 
 ### 7.4 EU AI Act Alignment
 
@@ -1031,22 +1051,22 @@ The DID Document's `controller` property MUST be set to an array containing the 
 
 ```json
 {
-  "id": "did:trail:org:acme-corp-eu-a7f3b2c1",
+  "id": "did:trail:org:acme-corp-eu-a7f3b2c1e9d0",
   "controller": [
-    "did:trail:org:acme-corp-eu-a7f3b2c1",
-    "did:trail:org:acme-corp-eu-a7f3b2c1#recovery-key-1"
+    "did:trail:org:acme-corp-eu-a7f3b2c1e9d0",
+    "did:trail:org:acme-corp-eu-a7f3b2c1e9d0#recovery-key-1"
   ],
   "verificationMethod": [
     {
-      "id": "did:trail:org:acme-corp-eu-a7f3b2c1#key-1",
+      "id": "did:trail:org:acme-corp-eu-a7f3b2c1e9d0#key-1",
       "type": "JsonWebKey2020",
-      "controller": "did:trail:org:acme-corp-eu-a7f3b2c1",
+      "controller": "did:trail:org:acme-corp-eu-a7f3b2c1e9d0",
       "publicKeyJwk": { "kty": "OKP", "crv": "Ed25519", "x": "..." }
     },
     {
-      "id": "did:trail:org:acme-corp-eu-a7f3b2c1#recovery-key-1",
+      "id": "did:trail:org:acme-corp-eu-a7f3b2c1e9d0#recovery-key-1",
       "type": "JsonWebKey2020",
-      "controller": "did:trail:org:acme-corp-eu-a7f3b2c1",
+      "controller": "did:trail:org:acme-corp-eu-a7f3b2c1e9d0",
       "publicKeyJwk": { "kty": "OKP", "crv": "Ed25519", "x": "..." }
     }
   ]
@@ -1073,7 +1093,7 @@ The recovery policy is declared in the DID Document:
     "threshold": 3,
     "totalGuardians": 5,
     "guardians": [
-      "did:trail:org:acme-corp-eu-a7f3b2c1#recovery-key-1",
+      "did:trail:org:acme-corp-eu-a7f3b2c1e9d0#recovery-key-1",
       "did:trail:org:trusted-partner-a-c3d4e5f6#key-1",
       "did:trail:org:trusted-partner-b-f6a7b8c9#key-1",
       "did:trail:org:legal-counsel-d-a1b2c3d4#key-1",
@@ -1164,20 +1184,40 @@ A reference implementation for `did:trail` is available at:
 **Language:** Node.js (TypeScript)
 **Package:** `@trailprotocol/core`
 
-```javascript
-const { generateKeyPair, createSelfDid, resolveSelf } = require('@trailprotocol/core');
+```typescript
+import {
+  generateKeyPair,
+  createSelfDid,
+  createOrgDid,
+  TrailResolver,
+  createSelfSignedCredential,
+  verifyCredential,
+} from '@trailprotocol/core';
 
 // Generate a new Ed25519 key pair
 const keys = generateKeyPair();
+console.log(keys.publicKeyMultibase);
+// "z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
 
-// Create a self-signed DID (no registry required)
-const { did, didDocument } = createSelfDid(keys);
-console.log(did);
-// "did:trail:self:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+// Create DIDs (self-mode requires no registry)
+const selfDid = createSelfDid(keys.publicKeyMultibase);
+const orgDid = createOrgDid('ACME Corporation', keys.publicKeyMultibase);
+console.log(selfDid);  // "did:trail:self:z6Mk..."
+console.log(orgDid);   // "did:trail:org:acme-a7f3b2c1e9d0"
 
-// Resolve a self-signed DID locally
-const resolved = resolveSelf(did);
-console.log(resolved.didDocument);
+// Resolve a self-signed DID (offline, no network)
+const resolver = new TrailResolver();
+const result = await resolver.resolve(selfDid);
+console.log(result.didDocument);
+
+// Create and verify a Verifiable Credential
+const vc = createSelfSignedCredential(
+  selfDid, orgDid,
+  { role: 'operator' },
+  keys.privateKeyBytes
+);
+const verification = verifyCredential(vc, keys.publicKeyBytes);
+console.log(verification.valid); // true
 ```
 
 ### 10.2 CLI
@@ -1394,7 +1434,48 @@ The following JSON file is submitted for inclusion in the [W3C DID Specification
 
 ---
 
-## 14. Changelog
+## 14. Appendix C — Test Vectors
+
+The following test vectors allow implementers to verify their `did:trail` implementations produce correct output.
+
+### 14.1 Key Material
+
+```
+Public Key (hex):      226ae6b63582ef8d753b75ad4236b86927dc7a36f793d97259268bd3c3f68800
+Public Key (multibase): z3KMQXnVKR9qMzkJFfoo9WAYb1A7rdUbEkDCwNWTp6uJX
+```
+
+### 14.2 Self-Mode DID
+
+```
+Input:  publicKeyMultibase = "z3KMQXnVKR9qMzkJFfoo9WAYb1A7rdUbEkDCwNWTp6uJX"
+Output: did:trail:self:z3KMQXnVKR9qMzkJFfoo9WAYb1A7rdUbEkDCwNWTp6uJX
+```
+
+### 14.3 Org-Mode DID (Slug Normalization + Hash Suffix)
+
+```
+Input:            "ACME Corporation GmbH"
+Normalized slug:  "acme"
+Hash input:       "acme:z3KMQXnVKR9qMzkJFfoo9WAYb1A7rdUbEkDCwNWTp6uJX"
+SHA-256 (hex):    bd70674e4dff...
+trail-hash:       "bd70674e4dff"
+Output DID:       did:trail:org:acme-bd70674e4dff
+```
+
+### 14.4 JCS Canonicalization (RFC 8785)
+
+```
+Input (JSON):  {"id":"did:trail:self:z3KMQXnVKR9qMzkJFfoo9WAYb1A7rdUbEkDCwNWTp6uJX","@context":["https://www.w3.org/ns/did/v1"]}
+JCS output:    {"@context":["https://www.w3.org/ns/did/v1"],"id":"did:trail:self:z3KMQXnVKR9qMzkJFfoo9WAYb1A7rdUbEkDCwNWTp6uJX"}
+SHA-256 (hex): 4c882a71d1796fabe2aa94748f6035c1e7581f984f3785291d403090b36ed208
+```
+
+Note: The JCS output differs from the input in key ordering (`@context` sorts before `id`). The SHA-256 of the JCS output is what gets signed in DataIntegrityProof operations.
+
+---
+
+## 15. Changelog
 
 ### v1.1.0-draft (2026-03-04)
 
@@ -1404,7 +1485,7 @@ This release addresses 9 critical improvements identified during community revie
 |---|--------|-------------------|
 | 1 | **Replaced "decentralized" with "vendor-neutral"** — The TRAIL Registry is not decentralized in the blockchain sense; it is a vendor-neutral, federated infrastructure. Terminology updated throughout. Added federation support (§3.3). | Abstract, §1.1, §1.2, §3.3 |
 | 2 | **Replaced Bearer token auth with DID Auth** — All API examples now use HTTP Message Signatures (RFC 9421) with Ed25519 keys instead of Bearer tokens. Added dedicated Authentication section. | §6.1.2, §6.3, §6.4.1, §6.5 (new) |
-| 3 | **Added content-addressable hash suffix** — DID identifiers for `org` and `agent` modes now include an 8-character hash suffix derived from the slug and public key, preventing accidental collisions and binding identifiers to key material. | §4.1, §4.2, §4.4, §4.5 (new), all examples |
+| 3 | **Added content-addressable hash suffix** — DID identifiers for `org` and `agent` modes now include a 12-character hash suffix derived from the slug and public key, preventing accidental collisions and binding identifiers to key material. | §4.1, §4.2, §4.4, §4.5 (new), all examples |
 | 4 | **Made Trust Score transparent** — Trust score is now a structured object with per-dimension breakdown instead of an opaque float. Added verifier-side computation endpoint and exact scoring formulas. | §7.3 (rewritten) |
 | 5 | **Reframed self-signed mode** — Renamed from "Early Adopter Mode" to "Local Verification Mode." Now positioned as the foundational trust tier (Tier 0) rather than a temporary workaround. Added 3-tier trust model. | §4.2, §7.2 (rewritten) |
 | 6 | **Fixed EU AI Act overclaims** — Changed language from "designed for compliance" to "designed to support organizational compliance." Added honest capability mapping table with explicit compliance gaps and disclaimer. | Abstract, §1.2, §7.4 (new) |
@@ -1418,7 +1499,7 @@ This release addresses 9 critical improvements identified during community revie
 
 ---
 
-## 15. References
+## 16. References
 
 ### Normative References
 

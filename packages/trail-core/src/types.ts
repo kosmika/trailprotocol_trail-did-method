@@ -50,7 +50,7 @@ export interface DidResolutionResult {
 
 export interface DataIntegrityProof {
   type: 'DataIntegrityProof';
-  cryptosuite: 'eddsa-2022';
+  cryptosuite: 'eddsa-jcs-2023';
   created: string;
   verificationMethod: string;
   proofPurpose: string;

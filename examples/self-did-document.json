@@ -4,8 +4,8 @@
     "https://trailprotocol.org/ns/did/v1"
   ],
   "id": "did:trail:self:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-  "trail:trailMode": "self-signed",
-  "trail:note": "Self-signed mode — verifiable without TRAIL Registry. For early adopter use.",
+  "trail:trailMode": "self",
+  "trail:trailTrustTier": 0,
   "verificationMethod": [
     {
       "id": "did:trail:self:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#key-1",
@@ -14,7 +14,7 @@
       "publicKeyJwk": {
         "kty": "OKP",
         "crv": "Ed25519",
-        "x": "z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+        "x": "o5ukMHk5tV5eRirK3hMzlOSoFSWpBFBfFMslnYhkUJE"
       }
     }
   ],

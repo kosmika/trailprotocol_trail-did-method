@@ -1,0 +1,43 @@
+{
+  "name": "@trailprotocol/core",
+  "version": "0.1.0",
+  "description": "TRAIL Protocol - Trust Registry for AI Identity Layer - Core SDK",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "bin": {
+    "trail": "dist/bin/trail.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "node --test dist/test/roundtrip.test.js",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "keywords": [
+    "did",
+    "trail",
+    "trust",
+    "ai",
+    "identity",
+    "w3c",
+    "verifiable-credentials"
+  ],
+  "author": "Christian Hommrich <christian.hommrich@gmail.com>",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/trailprotocol/trail-did-method",
+    "directory": "packages/trail-core"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
+  "devDependencies": {
+    "@types/node": "^25.3.3",
+    "typescript": "^5.9.3"
+  }
+}

@@ -3,12 +3,13 @@
     "https://www.w3.org/ns/did/v1",
     "https://trailprotocol.org/ns/did/v1"
   ],
-  "id": "did:trail:org:example-gmbh-de",
+  "id": "did:trail:org:example-de-a7f3b2c1",
+  "trail:trailMode": "org",
   "verificationMethod": [
     {
-      "id": "did:trail:org:example-gmbh-de#key-1",
+      "id": "did:trail:org:example-de-a7f3b2c1#key-1",
       "type": "JsonWebKey2020",
-      "controller": "did:trail:org:example-gmbh-de",
+      "controller": "did:trail:org:example-de-a7f3b2c1",
       "publicKeyJwk": {
         "kty": "OKP",
         "crv": "Ed25519",
@@ -16,16 +17,16 @@
       }
     }
   ],
-  "authentication": ["did:trail:org:example-gmbh-de#key-1"],
-  "assertionMethod": ["did:trail:org:example-gmbh-de#key-1"],
+  "authentication": ["did:trail:org:example-de-a7f3b2c1#key-1"],
+  "assertionMethod": ["did:trail:org:example-de-a7f3b2c1#key-1"],
   "service": [
     {
-      "id": "did:trail:org:example-gmbh-de#trail-registry",
+      "id": "did:trail:org:example-de-a7f3b2c1#trail-registry",
       "type": "TrailRegistryService",
-      "serviceEndpoint": "https://registry.trailprotocol.org/1.0/identifiers/did:trail:org:example-gmbh-de"
+      "serviceEndpoint": "https://registry.trailprotocol.org/1.0/identifiers/did:trail:org:example-de-a7f3b2c1"
     },
     {
-      "id": "did:trail:org:example-gmbh-de#ai-policy",
+      "id": "did:trail:org:example-de-a7f3b2c1#ai-policy",
       "type": "TrailAIPolicyService",
       "serviceEndpoint": "https://example-gmbh.de/.well-known/trail-ai-policy.json"
     }

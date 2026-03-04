@@ -3,17 +3,17 @@
     "https://www.w3.org/ns/did/v1",
     "https://trailprotocol.org/ns/did/v1"
   ],
-  "id": "did:trail:agent:example-gmbh-de-support-bot-v2",
-  "controller": "did:trail:org:example-gmbh-de",
+  "id": "did:trail:agent:support-bot-v2-e4d8f1a9",
+  "controller": "did:trail:org:example-de-a7f3b2c1",
+  "trail:trailMode": "agent",
   "trail:aiSystemType": "agent",
   "trail:euAiActRiskClass": "minimal",
-  "trail:parentOrganization": "did:trail:org:example-gmbh-de",
-  "trail:TrailCertificationStatus": "active",
+  "trail:parentOrganization": "did:trail:org:example-de-a7f3b2c1",
   "verificationMethod": [
     {
-      "id": "did:trail:agent:example-gmbh-de-support-bot-v2#key-1",
+      "id": "did:trail:agent:support-bot-v2-e4d8f1a9#key-1",
       "type": "JsonWebKey2020",
-      "controller": "did:trail:agent:example-gmbh-de-support-bot-v2",
+      "controller": "did:trail:agent:support-bot-v2-e4d8f1a9",
       "publicKeyJwk": {
         "kty": "OKP",
         "crv": "Ed25519",
@@ -21,13 +21,13 @@
       }
     }
   ],
-  "authentication": ["did:trail:agent:example-gmbh-de-support-bot-v2#key-1"],
-  "assertionMethod": ["did:trail:agent:example-gmbh-de-support-bot-v2#key-1"],
+  "authentication": ["did:trail:agent:support-bot-v2-e4d8f1a9#key-1"],
+  "assertionMethod": ["did:trail:agent:support-bot-v2-e4d8f1a9#key-1"],
   "service": [
     {
-      "id": "did:trail:agent:example-gmbh-de-support-bot-v2#trail-registry",
+      "id": "did:trail:agent:support-bot-v2-e4d8f1a9#trail-registry",
       "type": "TrailRegistryService",
-      "serviceEndpoint": "https://registry.trailprotocol.org/1.0/identifiers/did:trail:agent:example-gmbh-de-support-bot-v2"
+      "serviceEndpoint": "https://registry.trailprotocol.org/1.0/identifiers/did:trail:agent:support-bot-v2-e4d8f1a9"
     }
   ]
 }

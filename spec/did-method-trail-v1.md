@@ -1,20 +1,20 @@
 # did:trail Method Specification
 
-**Version:** 1.0.0-draft
+**Version:** 1.1.0-draft
 **Status:** Draft
 **Authors:** Christian Hommrich (TRAIL Protocol Initiative)
 **Contact:** christian.hommrich@gmail.com
 **Repository:** https://github.com/trailprotocol/trail-did-method
-**Date:** 2026-03-01
+**Date:** 2026-03-04
 **License:** CC BY 4.0
 
 ---
 
 ## Abstract
 
-The `did:trail` DID method specifies how Decentralized Identifiers (DIDs) are created, resolved, updated, and deactivated within the TRAIL (Trust Registry for AI Identity Layer) protocol. TRAIL provides a verifiable trust infrastructure for artificial intelligence systems, autonomous agents, and AI-powered services operating in B2B commerce environments.
+The `did:trail` DID method specifies how Decentralized Identifiers (DIDs) are created, resolved, updated, and deactivated within the TRAIL (Trust Registry for AI Identity Layer) protocol. TRAIL provides a vendor-neutral trust registry for artificial intelligence systems, autonomous agents, and AI-powered services operating in B2B commerce environments.
 
-This specification defines the `did:trail` method conforming to the [W3C DID Core 1.0 specification](https://www.w3.org/TR/did-core/) and the [Verifiable Credentials Data Model 2.0](https://www.w3.org/TR/vc-data-model-2.0/). It enables organizations and AI agents to establish cryptographically verifiable identities, express their AI usage policies, and participate in a trust ecosystem designed for compliance with the EU AI Act (Articles 13, 14, 26) and aligned with eIDAS 2.0.
+This specification defines the `did:trail` method conforming to the [W3C DID Core 1.0 specification](https://www.w3.org/TR/did-core/) and the [Verifiable Credentials Data Model 2.0](https://www.w3.org/TR/vc-data-model-2.0/). It enables organizations and AI agents to establish cryptographically verifiable identities, express their AI usage policies, and participate in a trust ecosystem designed to support organizational compliance with the EU AI Act (Articles 13, 14, 26, 49, 52) and aligned with eIDAS 2.0.
 
 ---
 
@@ -29,20 +29,49 @@ This document is a **Draft** specification submitted for registration in the [W3
 1. [Introduction](#1-introduction)
 2. [Conformance](#2-conformance)
 3. [The `did:trail` Method](#3-the-didtrail-method)
+   - 3.1 [Method Name](#31-method-name)
+   - 3.2 [Target System](#32-target-system)
+   - 3.3 [Registry Federation](#33-registry-federation)
 4. [DID Method Syntax](#4-did-method-syntax)
+   - 4.1 [Method-Specific Identifier](#41-method-specific-identifier)
+   - 4.2 [Identifier Modes](#42-identifier-modes)
+   - 4.3 [Identifier Constraints](#43-identifier-constraints)
+   - 4.4 [Example DIDs](#44-example-dids)
+   - 4.5 [Identifier Normalization](#45-identifier-normalization)
 5. [DID Document Structure](#5-did-document-structure)
+   - 5.1 [Core DID Document](#51-core-did-document)
+   - 5.2 [TRAIL-Specific Context Terms](#52-trail-specific-context-terms)
+   - 5.3 [Extended DID Document (Full Example)](#53-extended-did-document-full-example)
 6. [Method Operations](#6-method-operations)
    - 6.1 [Create (Register)](#61-create-register)
    - 6.2 [Read (Resolve)](#62-read-resolve)
    - 6.3 [Update](#63-update)
    - 6.4 [Deactivate (Revoke)](#64-deactivate-revoke)
+   - 6.5 [Authentication](#65-authentication)
 7. [TRAIL Trust Extensions](#7-trail-trust-extensions)
+   - 7.1 [TRAIL Verifiable Credentials](#71-trail-verifiable-credentials)
+   - 7.2 [Trust Tiers](#72-trust-tiers)
+   - 7.3 [Trust Score](#73-trust-score)
+   - 7.4 [EU AI Act Alignment](#74-eu-ai-act-alignment)
 8. [Security Considerations](#8-security-considerations)
+   - 8.1 [Key Security](#81-key-security)
+   - 8.2 [PEPPER Management](#82-pepper-management)
+   - 8.3 [Registry Availability](#83-registry-availability)
+   - 8.4 [Replay Attack Prevention](#84-replay-attack-prevention)
+   - 8.5 [Man-in-the-Middle Attacks](#85-man-in-the-middle-attacks)
+   - 8.6 [Revocation Timeliness](#86-revocation-timeliness)
+   - 8.7 [Key Recovery](#87-key-recovery)
 9. [Privacy Considerations](#9-privacy-considerations)
 10. [Reference Implementation](#10-reference-implementation)
-11. [Appendix A — JSON Registry Entry](#appendix-a--json-registry-entry)
-12. [Appendix B — Example DID Documents](#appendix-b--example-did-documents)
-13. [References](#references)
+11. [Governance](#11-governance)
+    - 11.1 [Governance Evolution](#111-governance-evolution)
+    - 11.2 [Dispute Resolution](#112-dispute-resolution)
+    - 11.3 [Registry Operator Requirements](#113-registry-operator-requirements)
+    - 11.4 [Change Management](#114-change-management)
+12. [Appendix A — JSON Registry Entry](#12-appendix-a--json-registry-entry)
+13. [Appendix B — Example DID Documents](#13-appendix-b--example-did-documents)
+14. [Changelog](#14-changelog)
+15. [References](#15-references)
 
 ---
 
@@ -52,7 +81,7 @@ This document is a **Draft** specification submitted for registration in the [W3
 
 Artificial intelligence systems increasingly act as autonomous agents in commercial contexts — drafting contracts, negotiating terms, providing advice, and executing decisions on behalf of organizations. Unlike human actors, AI agents cannot rely on social trust signals (reputation, body language, professional history) that humans use to establish credibility.
 
-TRAIL addresses this gap by providing a **decentralized trust registry** where AI-powered systems can register cryptographically verifiable identities, disclose their operational policies, and obtain tamper-proof credentials attesting to their identity and behavior standards.
+TRAIL addresses this gap by providing a **vendor-neutral trust registry** where AI-powered systems can register cryptographically verifiable identities, disclose their operational policies, and obtain tamper-proof credentials attesting to their identity and behavior standards.
 
 The `did:trail` method provides the identity foundation for this ecosystem.
 
@@ -61,11 +90,12 @@ The `did:trail` method provides the identity foundation for this ecosystem.
 The `did:trail` method is designed to:
 
 - **Be interoperable** with W3C DID Core 1.0 and Verifiable Credentials 2.0
-- **Support EU AI Act compliance** (Articles 13, 14, 26 transparency requirements)
+- **Support EU AI Act compliance** — provide the technical infrastructure that organizations can use to meet transparency and traceability requirements under the EU AI Act (Articles 13, 14, 26, 49, 52)
 - **Enable selective disclosure** — organizations can publish AI identity information without revealing proprietary implementation details
 - **Provide revocation** — trust certificates can be revoked with economic consequences for non-compliant actors
 - **Scale across B2B commerce** — from SMEs to enterprise deployments
 - **Work without a dedicated blockchain** — the TRAIL registry uses established web infrastructure with cryptographic anchoring
+- **Support federation** — enable multiple independent registries to interoperate, preventing vendor lock-in and enabling jurisdictional deployments
 
 ### 1.3 Relationship to Other DID Methods
 
@@ -91,6 +121,8 @@ This specification conforms to:
 - [W3C DID Specification Registries](https://www.w3.org/TR/did-spec-registries/)
 - [RFC 8037](https://www.rfc-editor.org/rfc/rfc8037) (CFRG Elliptic Curves — Ed25519)
 - [RFC 7517](https://www.rfc-editor.org/rfc/rfc7517) (JSON Web Key)
+- [RFC 9421](https://www.rfc-editor.org/rfc/rfc9421) (HTTP Message Signatures)
+- [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119) (Key words for use in RFCs)
 
 ---
 
@@ -111,7 +143,40 @@ The `did:trail` method uses the **TRAIL Registry** as its Verifiable Data Regist
 3. Manages revocation status via a TRAIL Status List compatible with [W3C VC Status List 2021](https://www.w3.org/TR/vc-status-list/)
 4. Provides a public resolution API at `https://registry.trailprotocol.org/1.0/identifiers/`
 
-**Self-Signed Mode:** Before the TRAIL Registry reaches production, DIDs MAY be created in **self-signed mode** (see §7.2). Self-signed `did:trail` DIDs are verifiable without an external registry and serve early adopters before the trust network reaches critical mass.
+**Local Verification Mode (self):** DIDs MAY be created in **self-signed mode** without external registry interaction (see §7.2). Self-signed `did:trail` DIDs are verifiable without an external registry and represent the foundational trust tier of the ecosystem.
+
+### 3.3 Registry Federation
+
+The TRAIL architecture SHOULD support federation — multiple independent registries operating under a shared protocol and interoperating to resolve identifiers across organizational and jurisdictional boundaries.
+
+#### 3.3.1 Registry Discovery
+
+When resolving a `did:trail` identifier, the resolver SHOULD attempt registry discovery in the following order:
+
+1. **DID Document Service Endpoint** — If the resolver already possesses a cached DID Document for the subject, it SHOULD use the `TrailRegistryService` endpoint declared in that document.
+2. **Well-Known Endpoint** — The resolver MAY query the subject's domain (if determinable) at `/.well-known/trail-registry` to discover the authoritative registry.
+3. **Default Registry** — If neither of the above yields a result, the resolver MUST fall back to the TRAIL default registry at `https://registry.trailprotocol.org/1.0/identifiers/`.
+
+#### 3.3.2 Cross-Registry Resolution
+
+When a registry receives a resolution request for an identifier it does not manage, it SHOULD respond with an HTTP 301 redirect to the authoritative registry if known:
+
+```http
+HTTP/1.1 301 Moved Permanently
+Location: https://registry.other-operator.eu/1.0/identifiers/did:trail:org:example-gmbh-de-b8c9d0e1
+X-Trail-Referral: true
+```
+
+If the authoritative registry is unknown, the registry MUST respond with HTTP 404.
+
+#### 3.3.3 Federation Requirements
+
+Federation is a SHOULD-level requirement. A conforming `did:trail` implementation:
+
+- SHOULD support registry discovery as defined in §3.3.1
+- SHOULD support cross-registry referrals as defined in §3.3.2
+- MAY operate as a standalone registry without federation support
+- MUST NOT require federation for basic DID resolution against the default registry
 
 ---
 
@@ -125,8 +190,12 @@ The method-specific identifier (MSI) for `did:trail` has the following ABNF synt
 did-trail          = "did:trail:" trail-identifier
 trail-identifier   = trail-mode ":" trail-subject
 trail-mode         = "org" / "agent" / "self"
-trail-subject      = 1*( ALPHA / DIGIT / "-" / "_" / "." )
+trail-subject      = trail-slug "-" trail-hash
+trail-slug         = 1*(ALPHA / DIGIT / "-")
+trail-hash         = 8HEXDIG
 ```
+
+The `trail-hash` component is a content-addressable suffix derived from the combination of the slug and the subject's public key material (see §4.5.2). For `self` mode, the subject is the multibase-encoded public key and no additional hash suffix is required, as the identifier is already content-addressable.
 
 ### 4.2 Identifier Modes
 
@@ -136,20 +205,28 @@ trail-subject      = 1*( ALPHA / DIGIT / "-" / "_" / "." )
 Identifies a legal entity (company, institution) operating AI systems.
 
 ```
-did:trail:org:acme-corp-eu
-did:trail:org:deutschebank-ai-desk
+did:trail:org:acme-corp-eu-a7f3b2c1
+did:trail:org:deutschebank-ai-desk-e2f4a6b8
 ```
 
 #### `agent` — AI Agent Identity
 Identifies a specific AI agent or AI-powered service instance operated by an organization. MUST be associated with a parent `org` DID.
 
 ```
-did:trail:agent:acme-corp-eu-sales-assistant-v2
-did:trail:agent:db-contract-analysis-prod-001
+did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7
+did:trail:agent:db-contract-analysis-prod-001-c8d9e0f1
 ```
 
-#### `self` — Self-Signed Identity (Early Adopter Mode)
-For use before TRAIL Registry production launch. DIDs are cryptographically self-contained and verifiable without external registry lookup.
+#### `self` — Local Verification Mode
+DIDs are cryptographically self-contained and verifiable without external registry lookup. Represents the foundational trust tier of the TRAIL ecosystem, providing cryptographic identity verification without organizational attestation.
+
+Self-signed DIDs are suitable for:
+- Development and testing environments
+- Air-gapped or offline verification scenarios
+- Bootstrapping identity before registry registration
+- Minimal-trust interactions where cryptographic proof of key control suffices
+
+An upgrade path exists from `self` to `org` or `agent` mode: the subject MAY register their existing key material with the TRAIL Registry to obtain a registry-backed identity while preserving cryptographic continuity.
 
 ```
 did:trail:self:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK
@@ -160,16 +237,82 @@ did:trail:self:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK
 
 - The `trail-subject` component MUST be globally unique within its mode namespace
 - `trail-subject` MUST NOT exceed 128 characters
-- `trail-subject` MUST use only URL-safe characters (ALPHA, DIGIT, hyphen, underscore, period)
-- Organization identifiers (`org` mode) MUST match a verified legal entity name or registered business identifier
+- `trail-subject` MUST use only URL-safe characters (ALPHA, DIGIT, hyphen)
+- Organization identifiers (`org` mode) MUST match a verified legal entity name or registered business identifier via the slug component
+- The `trail-hash` suffix MUST be computed as specified in §4.5.2
 
 ### 4.4 Example DIDs
 
 ```
-did:trail:org:acme-corp-eu
-did:trail:agent:acme-corp-eu-rfq-assistant-v1
+did:trail:org:acme-corp-eu-a7f3b2c1
+did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7
 did:trail:self:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK
 ```
+
+### 4.5 Identifier Normalization
+
+#### 4.5.1 Slug Normalization Rules
+
+The `trail-slug` component MUST be derived from the subject's legal or descriptive name following these normalization rules:
+
+1. Convert to lowercase ASCII
+2. Replace spaces and underscores with hyphens
+3. Remove legal entity suffixes (GmbH, Inc., Ltd., AG, S.A., B.V., etc.)
+4. Remove special characters other than hyphens
+5. Collapse consecutive hyphens into a single hyphen
+6. Trim leading and trailing hyphens
+
+**Examples:**
+
+| Input Name | Normalized Slug |
+|------------|----------------|
+| ACME Corporation GmbH | `acme-corporation` |
+| Deutsche Bank AG | `deutsche-bank` |
+| Müller & Söhne KG | `muller-sohne` |
+| AI-Powered Solutions Inc. | `ai-powered-solutions` |
+
+For `agent` mode, the slug SHOULD include the parent organization slug as a prefix, followed by a descriptive agent name:
+- `acme-corp-eu-rfq-assistant-v1`
+- `deutsche-bank-contract-analyzer-prod`
+
+#### 4.5.2 Content-Addressable Suffix
+
+The `trail-hash` is computed as follows:
+
+```
+trail-hash = SHA-256(slug + ":" + publicKeyMultibase)[0:8]
+```
+
+Where:
+- `slug` is the normalized slug as defined in §4.5.1
+- `publicKeyMultibase` is the multibase-encoded (base58btc) Ed25519 public key of the subject
+- `[0:8]` denotes the first 8 characters (4 bytes) of the lowercase hexadecimal digest
+
+**Example computation:**
+
+```
+slug              = "acme-corp-eu"
+publicKeyMultibase = "z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+input             = "acme-corp-eu:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+SHA-256(input)    = "a7f3b2c1..."  (truncated)
+trail-hash        = "a7f3b2c1"
+DID               = "did:trail:org:acme-corp-eu-a7f3b2c1"
+```
+
+This content-addressable suffix:
+- Prevents accidental slug collisions between different organizations
+- Binds the identifier cryptographically to the subject's key material
+- Enables fast verification that a DID corresponds to its claimed public key
+
+For `self` mode, the entire subject IS the public key (multibase-encoded), making an additional hash suffix unnecessary.
+
+#### 4.5.3 Registry Uniqueness Verification
+
+Upon receiving a registration request, the TRAIL Registry MUST:
+
+1. Verify that the `trail-hash` suffix was correctly computed from the provided slug and public key
+2. Reject registration if the computed hash does not match the requested DID
+3. Reject registration if the `trail-slug` component is identical to an existing registration (even if the hash differs), unless the registrant can demonstrate a legitimate claim (e.g., key rotation with identity continuity)
 
 ---
 
@@ -185,12 +328,12 @@ A `did:trail` DID Document MUST conform to the W3C DID Core 1.0 DID Document dat
     "https://www.w3.org/ns/did/v1",
     "https://trailprotocol.org/ns/did/v1"
   ],
-  "id": "did:trail:org:acme-corp-eu",
+  "id": "did:trail:org:acme-corp-eu-a7f3b2c1",
   "verificationMethod": [
     {
-      "id": "did:trail:org:acme-corp-eu#key-1",
+      "id": "did:trail:org:acme-corp-eu-a7f3b2c1#key-1",
       "type": "JsonWebKey2020",
-      "controller": "did:trail:org:acme-corp-eu",
+      "controller": "did:trail:org:acme-corp-eu-a7f3b2c1",
       "publicKeyJwk": {
         "kty": "OKP",
         "crv": "Ed25519",
@@ -199,19 +342,19 @@ A `did:trail` DID Document MUST conform to the W3C DID Core 1.0 DID Document dat
     }
   ],
   "authentication": [
-    "did:trail:org:acme-corp-eu#key-1"
+    "did:trail:org:acme-corp-eu-a7f3b2c1#key-1"
   ],
   "assertionMethod": [
-    "did:trail:org:acme-corp-eu#key-1"
+    "did:trail:org:acme-corp-eu-a7f3b2c1#key-1"
   ],
   "service": [
     {
-      "id": "did:trail:org:acme-corp-eu#trail-registry",
+      "id": "did:trail:org:acme-corp-eu-a7f3b2c1#trail-registry",
       "type": "TrailRegistryService",
-      "serviceEndpoint": "https://registry.trailprotocol.org/1.0/identifiers/did:trail:org:acme-corp-eu"
+      "serviceEndpoint": "https://registry.trailprotocol.org/1.0/identifiers/did:trail:org:acme-corp-eu-a7f3b2c1"
     },
     {
-      "id": "did:trail:org:acme-corp-eu#ai-policy",
+      "id": "did:trail:org:acme-corp-eu-a7f3b2c1#ai-policy",
       "type": "TrailAIPolicyService",
       "serviceEndpoint": "https://acme-corp.eu/.well-known/trail-ai-policy.json"
     }
@@ -227,11 +370,13 @@ The `https://trailprotocol.org/ns/did/v1` JSON-LD context defines the following 
 |------|------|-------------|
 | `TrailRegistryService` | Service type | Link to the TRAIL Registry resolution endpoint |
 | `TrailAIPolicyService` | Service type | Link to the AI Policy disclosure document |
-| `TrailTrustScore` | Property | Current trust score (0.0–1.0) from TRAIL Registry |
+| `TrailTrustScore` | Property | Current trust score object (see §7.3) from TRAIL Registry |
 | `TrailCertificationStatus` | Property | Status of TRAIL certification (active / suspended / revoked) |
 | `aiSystemType` | Property | Classification of AI system (llm / agent / classifier / other) |
 | `euAiActRiskClass` | Property | EU AI Act risk classification (minimal / limited / high / unacceptable) |
 | `parentOrganization` | Property | DID of parent org (required for `agent` mode DIDs) |
+| `recoveryPolicy` | Property | Key recovery policy configuration (see §8.7) |
+| `trailTrustTier` | Property | Trust tier level (0, 1, or 2) as defined in §7.2 |
 
 ### 5.3 Extended DID Document (Full Example)
 
@@ -242,13 +387,16 @@ The `https://trailprotocol.org/ns/did/v1` JSON-LD context defines the following 
     "https://w3id.org/security/suites/jws-2020/v1",
     "https://trailprotocol.org/ns/did/v1"
   ],
-  "id": "did:trail:agent:acme-corp-eu-rfq-assistant-v1",
-  "controller": "did:trail:org:acme-corp-eu",
+  "id": "did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7",
+  "controller": [
+    "did:trail:org:acme-corp-eu-a7f3b2c1",
+    "did:trail:org:acme-corp-eu-a7f3b2c1#recovery-key-1"
+  ],
   "verificationMethod": [
     {
-      "id": "did:trail:agent:acme-corp-eu-rfq-assistant-v1#key-1",
+      "id": "did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7#key-1",
       "type": "JsonWebKey2020",
-      "controller": "did:trail:agent:acme-corp-eu-rfq-assistant-v1",
+      "controller": "did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7",
       "publicKeyJwk": {
         "kty": "OKP",
         "crv": "Ed25519",
@@ -256,19 +404,32 @@ The `https://trailprotocol.org/ns/did/v1` JSON-LD context defines the following 
       }
     }
   ],
-  "authentication": ["did:trail:agent:acme-corp-eu-rfq-assistant-v1#key-1"],
-  "assertionMethod": ["did:trail:agent:acme-corp-eu-rfq-assistant-v1#key-1"],
+  "authentication": ["did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7#key-1"],
+  "assertionMethod": ["did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7#key-1"],
   "service": [
     {
-      "id": "did:trail:agent:acme-corp-eu-rfq-assistant-v1#trail-registry",
+      "id": "did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7#trail-registry",
       "type": "TrailRegistryService",
-      "serviceEndpoint": "https://registry.trailprotocol.org/1.0/identifiers/did:trail:agent:acme-corp-eu-rfq-assistant-v1"
+      "serviceEndpoint": "https://registry.trailprotocol.org/1.0/identifiers/did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7"
     }
   ],
   "trail:aiSystemType": "agent",
   "trail:euAiActRiskClass": "limited",
-  "trail:parentOrganization": "did:trail:org:acme-corp-eu",
-  "trail:TrailCertificationStatus": "active"
+  "trail:parentOrganization": "did:trail:org:acme-corp-eu-a7f3b2c1",
+  "trail:TrailCertificationStatus": "active",
+  "trail:trailTrustTier": 1,
+  "trail:recoveryPolicy": {
+    "type": "socialRecovery",
+    "threshold": 3,
+    "totalGuardians": 5,
+    "guardians": [
+      "did:trail:org:acme-corp-eu-a7f3b2c1#recovery-key-1",
+      "did:trail:org:trusted-partner-a-c3d4e5f6#key-1",
+      "did:trail:org:trusted-partner-b-f6a7b8c9#key-1",
+      "did:trail:org:legal-counsel-d-a1b2c3d4#key-1",
+      "did:trail:org:auditor-e-e5f6a7b8#key-1"
+    ]
+  }
 }
 ```
 
@@ -293,66 +454,72 @@ To create a `did:trail` DID, a registrant MUST:
 Generate an Ed25519 key pair using a cryptographically secure random number generator:
 
 ```javascript
-// Reference implementation (Node.js)
-const { generateKeyPair } = require('crypto');
-const { privateKey, publicKey } = generateKeyPairSync('ed25519');
+const { generateKeyPair } = require('@trailprotocol/core');
+const keys = generateKeyPair();
+// keys.publicKeyMultibase = "z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+// keys.privateKey = Uint8Array(64) [...]
 ```
 
 **Step 2 — DID Construction**
 Construct the DID string according to §4:
 ```
-did:trail:org:{organization-slug}
+did:trail:org:{normalized-slug}-{trail-hash}
 ```
 
-The `organization-slug` MUST be derived from the verified legal entity name following the TRAIL Slug Normalization Rules (lowercase, hyphens for spaces, removal of legal suffixes).
+The `normalized-slug` MUST be derived from the verified legal entity name following the TRAIL Slug Normalization Rules (§4.5.1). The `trail-hash` MUST be computed as specified in §4.5.2.
 
 **Step 3 — DID Document Construction**
 Construct the DID Document as specified in §5, including:
 - At minimum one `verificationMethod` entry with the public key in JWK format
 - A `TrailRegistryService` endpoint pointing to the TRAIL Registry
-- An `TrailAIPolicyService` endpoint (REQUIRED for `org` mode, OPTIONAL for `agent`)
+- A `TrailAIPolicyService` endpoint (REQUIRED for `org` mode, OPTIONAL for `agent`)
 
 **Step 4 — Registration Request**
-Submit the DID Document to the TRAIL Registry via HTTP POST:
+Submit the DID Document to the TRAIL Registry via authenticated HTTP POST:
 
 ```http
 POST https://registry.trailprotocol.org/1.0/register
 Content-Type: application/json
-Authorization: Bearer {TRAIL-API-KEY}
+Authorization: DIDAuth did:trail:org:acme-corp-eu-a7f3b2c1
+Signature-Input: sig1=("@method" "@target-uri" "content-type" "content-digest");created=1709510400;keyid="did:trail:org:acme-corp-eu-a7f3b2c1#key-1";alg="ed25519"
+Signature: sig1=:BASE64_ENCODED_SIGNATURE:
 
 {
-  "did": "did:trail:org:acme-corp-eu",
+  "did": "did:trail:org:acme-corp-eu-a7f3b2c1",
   "didDocument": { ... },
   "proof": {
     "type": "DataIntegrityProof",
     "cryptosuite": "eddsa-2022",
     "created": "2026-03-01T00:00:00Z",
-    "verificationMethod": "did:trail:org:acme-corp-eu#key-1",
+    "verificationMethod": "did:trail:org:acme-corp-eu-a7f3b2c1#key-1",
     "proofPurpose": "assertionMethod",
     "proofValue": "z..."
   }
 }
 ```
 
+For first-time registration (bootstrap), see §6.5.2.
+
 **Step 5 — Registry Confirmation**
 The TRAIL Registry validates:
 - DID Document syntax and required fields
-- Cryptographic proof validity
+- Cryptographic proof validity (including HTTP Message Signature)
+- Content-addressable hash verification (§4.5.2)
 - Identity verification (for `org` mode: KYB check)
-- Uniqueness of the requested identifier
+- Uniqueness of the requested identifier (§4.5.3)
 
 Upon successful validation, the Registry returns a signed TRAIL Registration Certificate (a Verifiable Credential).
 
 #### 6.1.3 Self-Signed Mode (No Registry Required)
 
-For early adopters and testing, `did:trail:self:` DIDs can be created without registry registration:
+For local verification and testing, `did:trail:self:` DIDs can be created without registry registration:
 
 ```javascript
-// Self-signed mode: DID derived directly from public key
-const multibase = require('multibase');
-const publicKeyBytes = publicKey.export({ type: 'spki', format: 'der' }).slice(-32);
-const encoded = multibase.encode('base58btc', publicKeyBytes);
-const did = `did:trail:self:${encoded}`;
+const { generateKeyPair, createSelfDid } = require('@trailprotocol/core');
+
+const keys = generateKeyPair();
+const { did, didDocument } = createSelfDid(keys);
+// did = "did:trail:self:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
 ```
 
 Self-signed DIDs are resolvable by any resolver that understands the `self` mode — no network request required.
@@ -365,13 +532,13 @@ A `did:trail` DID resolver MUST perform the following steps:
 
 1. Parse the DID to extract the mode and subject components
 2. Dispatch based on mode:
-   - `org` / `agent`: Perform HTTP GET to the TRAIL Registry
+   - `org` / `agent`: Perform HTTP GET to the TRAIL Registry (with registry discovery per §3.3.1)
    - `self`: Reconstruct DID Document from embedded public key
 
 **HTTP Resolution (org/agent mode):**
 
 ```http
-GET https://registry.trailprotocol.org/1.0/identifiers/did:trail:org:acme-corp-eu
+GET https://registry.trailprotocol.org/1.0/identifiers/did:trail:org:acme-corp-eu-a7f3b2c1
 Accept: application/did+ld+json
 ```
 
@@ -386,7 +553,18 @@ Accept: application/did+ld+json
     "updated": "2026-03-01T00:00:00Z",
     "deactivated": false,
     "trailCertificationStatus": "active",
-    "trailTrustScore": 0.87,
+    "trailTrustTier": 1,
+    "trailTrustScore": {
+      "overall": 0.87,
+      "dimensions": {
+        "identityVerification": { "score": 0.95, "weight": 0.25 },
+        "trackRecord": { "score": 0.90, "weight": 0.25 },
+        "informationProvenance": { "score": 0.80, "weight": 0.20 },
+        "behavioralConsistency": { "score": 0.82, "weight": 0.20 },
+        "thirdPartyAttestations": { "score": 0.70, "weight": 0.10 }
+      },
+      "lastComputed": "2026-03-01T00:00:00Z"
+    },
     "nextUpdate": "2026-06-01T00:00:00Z"
   },
   "didResolutionMetadata": {
@@ -398,25 +576,31 @@ Accept: application/did+ld+json
 #### 6.2.2 Self-Signed Resolution (self mode)
 
 ```javascript
-function resolveTrailSelf(did) {
-  const subject = did.split('did:trail:self:')[1];
-  const publicKeyBytes = multibase.decode(subject);
-  return {
-    "@context": ["https://www.w3.org/ns/did/v1", "https://trailprotocol.org/ns/did/v1"],
-    "id": did,
-    "verificationMethod": [{
-      "id": `${did}#key-1`,
-      "type": "JsonWebKey2020",
-      "controller": did,
-      "publicKeyJwk": {
-        "kty": "OKP",
-        "crv": "Ed25519",
-        "x": Buffer.from(publicKeyBytes).toString('base64url')
-      }
-    }],
-    "authentication": [`${did}#key-1`],
-    "assertionMethod": [`${did}#key-1`]
-  };
+const { resolveSelf } = require('@trailprotocol/core');
+
+const resolved = resolveSelf('did:trail:self:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK');
+// resolved.didDocument contains the reconstructed DID Document
+```
+
+The resolver reconstructs the DID Document deterministically from the embedded public key:
+
+```json
+{
+  "@context": ["https://www.w3.org/ns/did/v1", "https://trailprotocol.org/ns/did/v1"],
+  "id": "did:trail:self:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
+  "trail:trailTrustTier": 0,
+  "verificationMethod": [{
+    "id": "did:trail:self:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#key-1",
+    "type": "JsonWebKey2020",
+    "controller": "did:trail:self:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
+    "publicKeyJwk": {
+      "kty": "OKP",
+      "crv": "Ed25519",
+      "x": "11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo"
+    }
+  }],
+  "authentication": ["did:trail:self:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#key-1"],
+  "assertionMethod": ["did:trail:self:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#key-1"]
 }
 ```
 
@@ -424,19 +608,21 @@ function resolveTrailSelf(did) {
 
 | DID URL | Dereferences to |
 |---------|----------------|
-| `did:trail:org:acme#key-1` | The verification method with id `#key-1` |
-| `did:trail:org:acme#trail-registry` | The TrailRegistryService endpoint |
-| `did:trail:org:acme#ai-policy` | The AI Policy service endpoint |
-| `did:trail:org:acme?versionId=2026-03-01` | DID Document as of the specified date |
+| `did:trail:org:acme-corp-eu-a7f3b2c1#key-1` | The verification method with id `#key-1` |
+| `did:trail:org:acme-corp-eu-a7f3b2c1#trail-registry` | The TrailRegistryService endpoint |
+| `did:trail:org:acme-corp-eu-a7f3b2c1#ai-policy` | The AI Policy service endpoint |
+| `did:trail:org:acme-corp-eu-a7f3b2c1?versionId=2026-03-01` | DID Document as of the specified date |
 
 ### 6.3 Update
 
-DID Document updates require a signed update request from the DID controller:
+DID Document updates require an authenticated signed update request from the DID controller:
 
 ```http
-PUT https://registry.trailprotocol.org/1.0/identifiers/did:trail:org:acme-corp-eu
+PUT https://registry.trailprotocol.org/1.0/identifiers/did:trail:org:acme-corp-eu-a7f3b2c1
 Content-Type: application/json
-Authorization: Bearer {TRAIL-API-KEY}
+Authorization: DIDAuth did:trail:org:acme-corp-eu-a7f3b2c1
+Signature-Input: sig1=("@method" "@target-uri" "content-type" "content-digest");created=1711929600;keyid="did:trail:org:acme-corp-eu-a7f3b2c1#key-1";alg="ed25519"
+Signature: sig1=:BASE64_ENCODED_SIGNATURE:
 
 {
   "didDocument": { ...updated document... },
@@ -444,14 +630,14 @@ Authorization: Bearer {TRAIL-API-KEY}
     "type": "DataIntegrityProof",
     "cryptosuite": "eddsa-2022",
     "created": "2026-04-01T00:00:00Z",
-    "verificationMethod": "did:trail:org:acme-corp-eu#key-1",
+    "verificationMethod": "did:trail:org:acme-corp-eu-a7f3b2c1#key-1",
     "proofPurpose": "authentication",
     "proofValue": "z..."
   }
 }
 ```
 
-**Key Rotation:** When rotating the primary identity key, the DID controller MUST include both the old proof (signed with the current key) and the new key material. Key rotation does not change the DID itself.
+**Key Rotation:** When rotating the primary identity key, the DID controller MUST include both the old proof (signed with the current key) and the new key material. Key rotation does not change the DID itself. The `trail-hash` suffix remains bound to the original public key to preserve identifier stability.
 
 **Immutable fields:** The `id` field of a DID Document MUST NOT be changed after creation.
 
@@ -462,8 +648,10 @@ A DID MAY be deactivated either by the DID controller (voluntary) or by the TRAI
 #### 6.4.1 Controller-Initiated Deactivation
 
 ```http
-DELETE https://registry.trailprotocol.org/1.0/identifiers/did:trail:org:acme-corp-eu
-Authorization: Bearer {TRAIL-API-KEY}
+DELETE https://registry.trailprotocol.org/1.0/identifiers/did:trail:org:acme-corp-eu-a7f3b2c1
+Authorization: DIDAuth did:trail:org:acme-corp-eu-a7f3b2c1
+Signature-Input: sig1=("@method" "@target-uri");created=1709510400;keyid="did:trail:org:acme-corp-eu-a7f3b2c1#key-1";alg="ed25519"
+Signature: sig1=:BASE64_ENCODED_SIGNATURE:
 X-Trail-Proof: {signed-deactivation-proof}
 ```
 
@@ -475,9 +663,9 @@ The TRAIL Registry MAY revoke a DID under the following conditions:
 - Court order or regulatory requirement
 - Sustained pattern of harmful AI behavior (as defined in the TRAIL Conduct Standards)
 
-Revocation follows the TRAIL Revocation Policy (see [trailprotocol.org/legal/revocation-policy](https://trailprotocol.org/legal/revocation-policy)):
+Revocation follows the TRAIL Revocation Policy (see [trailprotocol.org/legal/revocation-policy](https://trailprotocol.org/legal/revocation-policy)) and the Dispute Resolution process defined in §11.2:
 1. **Notice:** 14-day written notice before revocation (except in cases of immediate harm)
-2. **Appeal:** 30-day appeal window via the TRAIL Dispute Resolution Process
+2. **Appeal:** 30-day appeal window via the TRAIL Dispute Resolution Process (§11.2)
 3. **Effect:** Upon revocation, the DID Document is marked `"deactivated": true` and all associated VCs become invalid
 
 #### 6.4.3 Deactivated DID Resolution
@@ -493,6 +681,57 @@ Resolving a deactivated DID MUST return the last known DID Document with the fol
   }
 }
 ```
+
+### 6.5 Authentication
+
+All write operations (create, update, deactivate) against the TRAIL Registry MUST be authenticated using DID-based authentication. Bearer tokens and API keys MUST NOT be used as the sole authentication mechanism.
+
+#### 6.5.1 DID-Based Authentication
+
+The TRAIL Registry uses HTTP Message Signatures as defined in [RFC 9421](https://www.rfc-editor.org/rfc/rfc9421) with Ed25519 signing keys.
+
+Each authenticated request MUST include:
+
+1. An `Authorization` header identifying the DID:
+   ```
+   Authorization: DIDAuth {did}
+   ```
+
+2. A `Signature-Input` header specifying the signature parameters:
+   ```
+   Signature-Input: sig1=("@method" "@target-uri" "content-type" "content-digest");created={unix-timestamp};keyid="{did}#key-1";alg="ed25519"
+   ```
+
+3. A `Signature` header containing the Ed25519 signature over the covered components:
+   ```
+   Signature: sig1=:BASE64_ENCODED_SIGNATURE:
+   ```
+
+The registry MUST:
+- Resolve the DID identified in the `Authorization` header
+- Extract the public key referenced by the `keyid` parameter
+- Verify the HTTP Message Signature against the covered components
+- Reject requests where the signature is invalid or the key is not authorized for the requested operation
+
+#### 6.5.2 First Registration Bootstrap
+
+During first-time registration, the DID does not yet exist in the registry and cannot be resolved. The bootstrap process uses a self-certifying proof:
+
+1. The registrant includes the full public key material in the registration request body (as part of the DID Document)
+2. The HTTP Message Signature is verified against the public key embedded in the request
+3. The registry verifies that the `trail-hash` in the requested DID correctly corresponds to the provided slug and public key (§4.5.2)
+4. For `org` mode, an out-of-band KYB (Know Your Business) verification MUST be completed before the DID is activated
+
+This ensures that even the first registration is cryptographically authenticated without requiring pre-existing credentials.
+
+#### 6.5.3 Self-Signed Mode Authentication
+
+Self-signed mode (`did:trail:self:`) operates locally and does not interact with the TRAIL Registry. Authentication in self-signed mode:
+
+- The DID controller signs Verifiable Credentials with their Ed25519 private key
+- Verifiers reconstruct the public key from the DID itself (the subject IS the public key)
+- No network requests are required for authentication or verification
+- All trust is derived from direct cryptographic verification of signatures
 
 ---
 
@@ -510,14 +749,23 @@ The TRAIL Registry issues Verifiable Credentials (conforming to VC Data Model 2.
     "https://trailprotocol.org/ns/credentials/v1"
   ],
   "type": ["VerifiableCredential", "TrailIdentityCredential"],
-  "issuer": "did:trail:org:trail-protocol",
+  "issuer": "did:trail:org:trail-protocol-f0e1d2c3",
   "issuanceDate": "2026-03-01T00:00:00Z",
   "credentialSubject": {
-    "id": "did:trail:org:acme-corp-eu",
+    "id": "did:trail:org:acme-corp-eu-a7f3b2c1",
     "legalName": "ACME Corporation GmbH",
     "jurisdiction": "DE",
-    "euAiActCompliant": true,
-    "trailTrustScore": 0.87,
+    "trailTrustTier": 1,
+    "trailTrustScore": {
+      "overall": 0.87,
+      "dimensions": {
+        "identityVerification": 0.95,
+        "trackRecord": 0.90,
+        "informationProvenance": 0.80,
+        "behavioralConsistency": 0.82,
+        "thirdPartyAttestations": 0.70
+      }
+    },
     "certificationLevel": "standard"
   },
   "credentialStatus": {
@@ -530,30 +778,205 @@ The TRAIL Registry issues Verifiable Credentials (conforming to VC Data Model 2.
 }
 ```
 
-### 7.2 Self-Signed Mode
+### 7.2 Trust Tiers
 
-In self-signed mode, parties can exchange TRAIL-formatted Verifiable Credentials without requiring TRAIL Registry lookup. Self-signed credentials are signed with the DID controller's private key and verifiable via the public key embedded in the `did:trail:self:` DID.
+The TRAIL ecosystem defines a three-tier trust model. Each tier represents an increasing level of identity assurance and organizational accountability.
 
-This mode is intended for:
-- Development and testing
-- Early adopter usage before registry production launch
-- Air-gapped or offline verification scenarios
+#### Tier 0 — Self-Signed (Cryptographic Verification Only)
 
-Self-signed credentials carry reduced trust weight compared to Registry-issued credentials and MUST be clearly marked as `"trailMode": "self-signed"`.
+- **Mode:** `self`
+- **Assurance Level:** Cryptographic proof of key control only
+- **Verification:** Local, no network required
+- **Use Cases:** Development, testing, bootstrapping, offline scenarios, minimal-trust B2B interactions
+- **Trust Basis:** The verifier trusts that the presenter controls the private key corresponding to the DID. No organizational identity is attested.
 
-### 7.3 Trust Score Dimensions
+Self-signed credentials MUST include `"trailTrustTier": 0` in the credential subject.
 
-The TRAIL Trust Score (0.0–1.0) is computed across 5 dimensions:
+#### Tier 1 — Registry-Backed (KYB-Verified)
 
-| # | Dimension | Weight | Description |
-|---|-----------|--------|-------------|
-| 1 | **Identity Verification** | 25% | Verified legal entity vs. self-declared |
-| 2 | **Track Record** | 25% | Complaint rate over trailing 12 months |
-| 3 | **Information Provenance** | 20% | Are AI outputs verifiably sourced? |
-| 4 | **Behavioral Consistency** | 20% | AI output vs. declared policy alignment |
-| 5 | **Third-Party Attestations** | 10% | Attestations from other TRAIL participants |
+- **Mode:** `org` or `agent`
+- **Assurance Level:** Cryptographic proof + verified organizational identity
+- **Verification:** TRAIL Registry resolution + KYB (Know Your Business) verification
+- **Use Cases:** Production B2B interactions, AI agent deployment, EU AI Act transparency compliance
+- **Trust Basis:** The TRAIL Registry has verified the legal identity of the organization and the association of the agent with its parent organization.
 
-Trust Score computation is performed by the TRAIL Registry using a weighted formula documented in the [TRAIL Trust Score Specification v1.0](https://trailprotocol.org/specs/trust-score-v1).
+#### Tier 2 — Audited (Registry + Third-Party Audit)
+
+- **Mode:** `org` or `agent`
+- **Assurance Level:** Cryptographic proof + KYB + independent third-party audit
+- **Verification:** TRAIL Registry resolution + third-party audit attestation
+- **Use Cases:** High-risk AI deployments, regulated industries (finance, healthcare), high-value B2B commerce
+- **Trust Basis:** In addition to Tier 1 assurances, an accredited third-party auditor has independently verified the organization's AI practices, security controls, and compliance posture.
+
+**Trust Tier Summary:**
+
+| Property | Tier 0: Self | Tier 1: Registry | Tier 2: Audited |
+|----------|-------------|-----------------|-----------------|
+| Crypto verification | Yes | Yes | Yes |
+| KYB identity check | No | Yes | Yes |
+| Third-party audit | No | No | Yes |
+| Registry required | No | Yes | Yes |
+| Revocable | No (self-managed) | Yes | Yes |
+| EU AI Act support | Minimal | Standard | Full |
+| Trust Score | N/A | Computed | Computed + audited |
+
+### 7.3 Trust Score
+
+The TRAIL Trust Score quantifies the trustworthiness of a registered identity across five independently verifiable dimensions.
+
+#### 7.3.1 Score Dimensions
+
+| # | Dimension | Weight | Description | Verifiable By |
+|---|-----------|--------|-------------|---------------|
+| D1 | **Identity Verification** | 25% | Verified legal entity vs. self-declared | KYB documentation, eIDAS certificates, registry records |
+| D2 | **Track Record** | 25% | Complaint rate over trailing 12 months | Public complaint registry, dispute resolution logs |
+| D3 | **Information Provenance** | 20% | Are AI outputs verifiably sourced? | Signed output attestations, source citation credentials |
+| D4 | **Behavioral Consistency** | 20% | AI output vs. declared policy alignment | Automated policy compliance checks, verifier reports |
+| D5 | **Third-Party Attestations** | 10% | Attestations from other TRAIL participants | Verifiable Credentials from accredited attestors |
+
+#### 7.3.2 Computation Algorithm
+
+The overall Trust Score `S` is computed as:
+
+```
+S = Σ(wi × di) for i = 1..5
+```
+
+Where `wi` is the weight and `di` is the dimension score (0.0–1.0) for each dimension.
+
+**Dimension Formulas:**
+
+- **D1 (Identity Verification):**
+  ```
+  d1 = 0.4 (self-declared name only)
+     + 0.3 (KYB document verified)
+     + 0.2 (eIDAS-compatible identity verified)
+     + 0.1 (annual re-verification current)
+  ```
+  Each component is binary (0 or its value). Maximum d1 = 1.0.
+
+- **D2 (Track Record):**
+  ```
+  d2 = max(0, 1.0 - (complaints_12m / interactions_12m) × 100)
+  ```
+  Where `complaints_12m` is the number of verified complaints in the trailing 12 months and `interactions_12m` is the total number of recorded interactions. New registrants with < 30 days history receive d2 = 0.5 (neutral).
+
+- **D3 (Information Provenance):**
+  ```
+  d3 = signed_outputs / total_outputs
+  ```
+  Where `signed_outputs` is the number of AI outputs accompanied by valid source attestation credentials. Measured over trailing 90 days.
+
+- **D4 (Behavioral Consistency):**
+  ```
+  d4 = compliant_checks / total_checks
+  ```
+  Where `compliant_checks` is the number of automated policy compliance checks that passed. Measured over trailing 90 days.
+
+- **D5 (Third-Party Attestations):**
+  ```
+  d5 = min(1.0, valid_attestations / 5)
+  ```
+  Where `valid_attestations` is the count of non-expired, non-revoked Verifiable Credentials from distinct accredited attestors. Capped at 5.
+
+#### 7.3.3 Score Transparency
+
+The TRAIL Registry MUST expose per-dimension scores in all resolution responses (see §6.2.1). The trust score in resolution metadata MUST be an object, not a single float:
+
+```json
+{
+  "trailTrustScore": {
+    "overall": 0.87,
+    "dimensions": {
+      "identityVerification": { "score": 0.95, "weight": 0.25 },
+      "trackRecord": { "score": 0.90, "weight": 0.25 },
+      "informationProvenance": { "score": 0.80, "weight": 0.20 },
+      "behavioralConsistency": { "score": 0.82, "weight": 0.20 },
+      "thirdPartyAttestations": { "score": 0.70, "weight": 0.10 }
+    },
+    "lastComputed": "2026-03-01T00:00:00Z"
+  }
+}
+```
+
+#### 7.3.4 Verifier-Side Computation
+
+To enable independent verification of trust scores, the TRAIL Registry MUST provide a raw inputs endpoint:
+
+```http
+GET https://registry.trailprotocol.org/1.0/trust-score/did:trail:org:acme-corp-eu-a7f3b2c1/inputs
+Accept: application/json
+```
+
+**Response:**
+
+```json
+{
+  "did": "did:trail:org:acme-corp-eu-a7f3b2c1",
+  "inputs": {
+    "d1_identity": {
+      "selfDeclared": true,
+      "kybVerified": true,
+      "eidasVerified": true,
+      "reVerificationCurrent": true
+    },
+    "d2_trackRecord": {
+      "complaints12m": 2,
+      "interactions12m": 15420,
+      "periodStart": "2025-03-01T00:00:00Z",
+      "periodEnd": "2026-03-01T00:00:00Z"
+    },
+    "d3_provenance": {
+      "signedOutputs": 12850,
+      "totalOutputs": 16062,
+      "periodDays": 90
+    },
+    "d4_consistency": {
+      "compliantChecks": 4920,
+      "totalChecks": 6000,
+      "periodDays": 90
+    },
+    "d5_attestations": {
+      "validAttestations": 3,
+      "attestorDids": [
+        "did:trail:org:audit-firm-a-b1c2d3e4",
+        "did:trail:org:industry-assoc-c-f5a6b7c8",
+        "did:trail:org:partner-d-d9e0f1a2"
+      ]
+    }
+  },
+  "computedScore": 0.87,
+  "computedAt": "2026-03-01T00:00:00Z"
+}
+```
+
+Verifiers MAY independently recompute the score from the raw inputs to confirm the registry's computation. Discrepancies SHOULD be reported via the dispute resolution process (§11.2).
+
+#### 7.3.5 Third-Party Audit
+
+Accredited auditors MAY independently audit trust score inputs and publish audit attestation credentials. These attestations:
+
+- MUST be issued as Verifiable Credentials by the auditor's `did:trail` DID
+- MUST reference the audited subject's DID
+- MUST specify the audit scope (which dimensions were audited)
+- SHOULD be published within 30 days of the audit completion
+- Contribute to the D5 (Third-Party Attestations) dimension
+
+### 7.4 EU AI Act Alignment
+
+TRAIL provides technical infrastructure that organizations can use to support their compliance efforts with the EU AI Act. This section maps TRAIL capabilities to specific EU AI Act requirements.
+
+> **Disclaimer:** TRAIL registration does NOT constitute compliance with the EU AI Act. Compliance is the responsibility of the deploying organization. TRAIL provides tools and infrastructure to support compliance but does not replace legal assessment, risk management processes, or regulatory obligations. Organizations MUST conduct their own compliance assessment with qualified legal counsel.
+
+#### 7.4.1 Capability Mapping
+
+| EU AI Act Article | Requirement | TRAIL Capability | Compliance Gap |
+|-------------------|-------------|------------------|----------------|
+| **Art. 13** (Transparency) | AI systems must be designed to allow human oversight and include sufficient transparency for users | `did:trail` DID provides a unique, verifiable identity for each AI system; `TrailAIPolicyService` enables machine-readable disclosure of capabilities and limitations | TRAIL provides identity and disclosure infrastructure. Organizations must still ensure the content of disclosures meets Art. 13 requirements. Accuracy and completeness of disclosed information is the registrant's responsibility. |
+| **Art. 14** (Human Oversight) | Providers must design high-risk AI with tools for effective human oversight | TRAIL Verifiable Credentials create an audit trail of AI system actions; trust score tracks behavioral consistency over time | TRAIL provides auditability infrastructure. Organizations must implement actual oversight processes, escalation procedures, and intervention capabilities independently. |
+| **Art. 26** (Obligations of Deployers) | Deployers of high-risk AI must use systems in accordance with instructions, monitor operations, and keep logs | KYB-verified organizational identity links AI agents to accountable legal entities; revocation mechanism enables rapid deactivation of non-compliant agents | TRAIL supports identity linkage and revocation. Deployers must independently establish monitoring procedures, usage policies, and log retention in accordance with Art. 26. |
+| **Art. 49** (Registration) | Providers and deployers must register high-risk AI systems in the EU database | TRAIL Trust Registry can serve as a complementary technical registry alongside the official EU database | TRAIL is NOT the official EU AI database. Registration in TRAIL does not satisfy Art. 49. Organizations MUST register in the official EU database independently. |
+| **Art. 52** (Transparency for Certain AI Systems) | Persons interacting with AI must be informed they are interacting with AI | TRAIL DID can be presented in real-time to verify AI system identity; TRAIL Badge provides visual indicator | TRAIL provides the verification mechanism. Organizations must ensure actual notification is delivered to affected persons in a clear and timely manner. Implementation of UI/UX notification is the organization's responsibility. |
 
 ---
 
@@ -565,6 +988,7 @@ Trust Score computation is performed by the TRAIL Registry using a weighted form
 - Private keys MUST be stored in hardware security modules (HSMs) for production deployments
 - RECOMMENDED: key rotation every 12 months or upon suspected compromise
 - The TRAIL Protocol RECOMMENDS using PKCS#11-compatible HSMs (e.g., AWS CloudHSM, Azure Dedicated HSM)
+- Organizations MUST implement at least one key recovery mechanism as defined in §8.7
 
 ### 8.2 PEPPER Management
 
@@ -580,7 +1004,7 @@ The TRAIL Registry uses HMAC-SHA256 with a server-side PEPPER for additional int
 The TRAIL Registry is a critical infrastructure component. The following security controls are REQUIRED:
 - DDoS protection and rate limiting on the public resolution API
 - Geographically distributed read replicas for resolution availability
-- Signed registry responses (the Registry MUST sign all resolution responses with its own `did:trail:org:trail-protocol` key)
+- Signed registry responses (the Registry MUST sign all resolution responses with its own `did:trail:org:trail-protocol-f0e1d2c3` key)
 - Audit logs for all write operations (create, update, deactivate)
 
 ### 8.4 Replay Attack Prevention
@@ -594,6 +1018,103 @@ All communication with the TRAIL Registry MUST use TLS 1.3 or higher. Certificat
 ### 8.6 Revocation Timeliness
 
 Verifiers MUST check credential revocation status at verification time. Cached revocation lists MUST NOT be used for longer than 1 hour for high-stakes verification contexts.
+
+### 8.7 Key Recovery
+
+Loss of private key material can render a DID permanently unusable. Organizations MUST implement at least one of the following key recovery mechanisms.
+
+#### 8.7.1 Multi-Controller Recovery
+
+A DID Document MAY specify multiple controllers. If the primary controller's key is lost, an alternate controller can authorize key rotation.
+
+The DID Document's `controller` property MUST be set to an array containing the primary DID and one or more recovery controller references:
+
+```json
+{
+  "id": "did:trail:org:acme-corp-eu-a7f3b2c1",
+  "controller": [
+    "did:trail:org:acme-corp-eu-a7f3b2c1",
+    "did:trail:org:acme-corp-eu-a7f3b2c1#recovery-key-1"
+  ],
+  "verificationMethod": [
+    {
+      "id": "did:trail:org:acme-corp-eu-a7f3b2c1#key-1",
+      "type": "JsonWebKey2020",
+      "controller": "did:trail:org:acme-corp-eu-a7f3b2c1",
+      "publicKeyJwk": { "kty": "OKP", "crv": "Ed25519", "x": "..." }
+    },
+    {
+      "id": "did:trail:org:acme-corp-eu-a7f3b2c1#recovery-key-1",
+      "type": "JsonWebKey2020",
+      "controller": "did:trail:org:acme-corp-eu-a7f3b2c1",
+      "publicKeyJwk": { "kty": "OKP", "crv": "Ed25519", "x": "..." }
+    }
+  ]
+}
+```
+
+The recovery key SHOULD be stored in a separate, secure location (e.g., cold storage HSM, offline vault) distinct from the primary key.
+
+#### 8.7.2 Social Recovery
+
+Social recovery uses an M-of-N threshold scheme where designated guardians can collectively authorize key rotation. This is RECOMMENDED for organizations that require high resilience against single points of failure.
+
+**Configuration:**
+- RECOMMENDED: 3-of-5 threshold (3 guardians must agree out of 5 total)
+- Guardians MUST be distinct legal entities with their own `did:trail` DIDs
+- Guardians SHOULD be from different jurisdictions or organizational contexts to reduce correlated failure risk
+
+The recovery policy is declared in the DID Document:
+
+```json
+{
+  "trail:recoveryPolicy": {
+    "type": "socialRecovery",
+    "threshold": 3,
+    "totalGuardians": 5,
+    "guardians": [
+      "did:trail:org:acme-corp-eu-a7f3b2c1#recovery-key-1",
+      "did:trail:org:trusted-partner-a-c3d4e5f6#key-1",
+      "did:trail:org:trusted-partner-b-f6a7b8c9#key-1",
+      "did:trail:org:legal-counsel-d-a1b2c3d4#key-1",
+      "did:trail:org:auditor-e-e5f6a7b8#key-1"
+    ],
+    "recoveryTimeout": "P7D"
+  }
+}
+```
+
+The `recoveryTimeout` field specifies the mandatory waiting period (ISO 8601 duration) after a recovery request is initiated before the new key becomes active. This provides a window for the legitimate controller to detect and contest unauthorized recovery attempts.
+
+**Recovery Process:**
+1. The requester submits a recovery request to the TRAIL Registry, signed by at least one guardian
+2. The registry notifies all guardians and the last-known controller contact
+3. Additional guardians sign the recovery request until the threshold is met
+4. After the `recoveryTimeout` expires and the threshold is met, the new key material is activated
+5. The original key material is deactivated
+
+#### 8.7.3 Registry-Assisted Recovery
+
+For organizations that prefer registry-mediated recovery, the TRAIL Registry MAY assist with key recovery under strict conditions:
+
+1. The registrant MUST complete a full KYB (Know Your Business) re-verification, equivalent to the original registration process
+2. The registrant MUST provide documentary evidence of key loss (incident report, HSM failure documentation, etc.)
+3. A mandatory 30-day waiting period MUST elapse after the recovery request is submitted
+4. The TRAIL Registry MUST publish a public notice of the pending recovery to enable third-party objections
+5. If no objections are raised during the waiting period, the new key material is activated
+
+Registry-assisted recovery is a last-resort mechanism. It is RECOMMENDED only when multi-controller and social recovery are not available.
+
+#### 8.7.4 Key Escrow (Optional)
+
+For organizations in regulated industries (e.g., financial services, healthcare) where regulatory bodies may require access to key material, key escrow MAY be implemented:
+
+- Escrow MUST use a split-key scheme where no single party holds the complete private key
+- Escrow agents MUST be accredited entities (e.g., qualified trust service providers under eIDAS)
+- Key reconstitution MUST require authorization from both the registrant and the regulatory authority
+- Escrowed keys MUST be stored in FIPS 140-2 Level 3 (or higher) HSMs
+
+Key escrow is OPTIONAL and MUST NOT be required for standard TRAIL registration.
 
 ---
 
@@ -617,7 +1138,7 @@ The AI Policy document (`TrailAIPolicyService` endpoint) SHOULD follow the [TRAI
 
 Using a single `org` DID across many interactions enables correlation of all those interactions. Organizations with elevated privacy requirements SHOULD:
 - Use per-interaction `agent` DIDs with rotating key material
-- Implement the TRAIL Pseudonymous Mode (see planned v1.1 specification)
+- Implement the TRAIL Pseudonymous Mode (see planned future specification)
 
 ### 9.4 GDPR Compliance
 
@@ -635,61 +1156,152 @@ Any DID controller MUST be able to deactivate their DID and associated credentia
 
 ## 10. Reference Implementation
 
-### 10.1 Resolver
+### 10.1 Core Library
 
-A reference resolver for `did:trail` is available at:
+A reference implementation for `did:trail` is available at:
 
-**Repository:** https://github.com/trailprotocol/trail-resolver
+**Repository:** https://github.com/trailprotocol/trail-did-method
 **Language:** Node.js (TypeScript)
-**Package:** `npm install @trailprotocol/resolver`
+**Package:** `@trailprotocol/core`
 
 ```javascript
-const { TrailResolver } = require('@trailprotocol/resolver');
+const { generateKeyPair, createSelfDid, resolveSelf } = require('@trailprotocol/core');
 
-const resolver = new TrailResolver({
-  registryEndpoint: 'https://registry.trailprotocol.org/1.0',
-  // For self-signed mode, no API key required:
-  selfSignedMode: true
-});
+// Generate a new Ed25519 key pair
+const keys = generateKeyPair();
 
-const result = await resolver.resolve('did:trail:org:acme-corp-eu');
-console.log(result.didDocument);
+// Create a self-signed DID (no registry required)
+const { did, didDocument } = createSelfDid(keys);
+console.log(did);
+// "did:trail:self:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+
+// Resolve a self-signed DID locally
+const resolved = resolveSelf(did);
+console.log(resolved.didDocument);
 ```
 
-### 10.2 DID Generation CLI
+### 10.2 CLI
 
 ```bash
-npm install -g @trailprotocol/cli
+# Generate a new Ed25519 key pair
+npx @trailprotocol/core keygen
 
-# Generate a new org DID (self-signed mode)
-trail did create --mode org --subject acme-corp-eu --output ./did-document.json
+# Create a self-signed DID
+npx @trailprotocol/core did create --mode self
 
-# Generate an agent DID
-trail did create --mode agent --subject acme-corp-eu-rfq-v1 --parent did:trail:org:acme-corp-eu
+# Create an org DID (outputs DID and DID Document; registration requires registry)
+npx @trailprotocol/core did create --mode org --slug acme-corp-eu
 
-# Resolve a DID
-trail did resolve did:trail:org:acme-corp-eu
+# Resolve a self-signed DID locally
+npx @trailprotocol/core did resolve did:trail:self:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK
 ```
 
 ### 10.3 Universal Resolver Integration
 
-`did:trail` is designed for integration with the [DIF Universal Resolver](https://resolver.identity.foundation). A Universal Resolver driver for `did:trail` is provided at:
+`did:trail` is designed for integration with the [DIF Universal Resolver](https://resolver.identity.foundation). A Universal Resolver driver for `did:trail` is planned and will be published at:
 
-**Docker Image:** `ghcr.io/trailprotocol/universal-resolver-driver-trail:latest`
+**Repository:** https://github.com/trailprotocol/trail-did-method (under `/packages/universal-resolver-driver`)
 
-```yaml
-# docker-compose addition for Universal Resolver
-did-trail:
-  image: ghcr.io/trailprotocol/universal-resolver-driver-trail:latest
-  ports:
-    - "8080:8080"
-  environment:
-    - TRAIL_REGISTRY_ENDPOINT=https://registry.trailprotocol.org/1.0
-```
+The driver will conform to the Universal Resolver driver interface specification and support both registry-backed and self-signed resolution modes.
 
 ---
 
-## Appendix A — JSON Registry Entry
+## 11. Governance
+
+### 11.1 Governance Evolution
+
+Governance of the TRAIL Protocol evolves through three planned phases to progressively decentralize decision-making while maintaining operational stability.
+
+#### Phase 1: Founding Governance (2026)
+
+- The founding team (TRAIL Protocol Initiative) makes all governance decisions
+- Focus: Protocol stabilization, first registry operator accreditation, initial participant onboarding
+- The Participant Agreement is a bilateral contract between the founding entity and each participant
+- All protocol changes are published with rationale on the TRAIL GitHub repository
+- Community feedback is actively solicited via GitHub Issues and the W3C CCG mailing list
+
+#### Phase 2: Advisory Board (2027)
+
+- An Advisory Board of 3-5 external members is established with advisory authority on governance changes
+- Board composition MUST include at minimum:
+  - One representative with data protection / privacy expertise
+  - One representative from enterprise IT / platform operations
+  - One representative with regulatory / legal expertise
+- The founding entity retains veto authority during this phase
+- Major governance changes require Advisory Board consultation (non-binding recommendation)
+- Board members serve 2-year terms, renewable once
+
+#### Phase 3: Multi-Stakeholder Governance (2028+)
+
+- A Governance Board is established with representatives from:
+  - TRAIL Registry operators
+  - Accredited Certificate Authorities (Partner-CAs)
+  - Verifier organizations
+  - AI agent deployers
+- Policy changes are decided by weighted vote (composition TBD based on ecosystem maturity)
+- The founding entity retains control of root key material (analogous to the ICANN/IANA model)
+- Optional transition to a foundation model if strategically beneficial
+- All governance proceedings and decisions are published publicly
+
+### 11.2 Dispute Resolution
+
+#### Dispute Categories
+
+| Category | Description | Initial Handler | Escalation Path |
+|----------|-------------|-----------------|-----------------|
+| **Technical** | DID resolution failures, incorrect trust scores, registry errors | Registry Operator support | TRAIL Technical Committee |
+| **Identity** | Contested slug ownership, trademark conflicts, impersonation | TRAIL Registry team | Advisory Board / Governance Board |
+| **Conduct** | Misrepresentation, harmful AI behavior, policy violations | TRAIL Registry team | Governance Board |
+| **Revocation** | Disputed revocation decisions, reinstatement requests | TRAIL Registry team | Revocation Appeals Process |
+| **Commercial** | Fee disputes, SLA violations, contract disagreements | TRAIL commercial team | Binding arbitration (ICC Rules) |
+
+#### Revocation Appeals Process
+
+When a DID is revoked by the registry (§6.4.2) and the controller disputes the revocation, the following appeals process applies:
+
+1. **Formal Appeal Submission** — The DID controller submits a written appeal within 30 days of receiving the revocation notice. The appeal MUST include a statement of facts and any supporting evidence.
+2. **Preliminary Review** — The TRAIL Registry team reviews the appeal within 14 days and either reinstates the DID (if the revocation was clearly in error) or escalates to the Governance Board.
+3. **Governance Board Hearing** — The Governance Board (or Advisory Board in Phase 2) reviews the case, including written submissions from both parties, within 30 days of escalation.
+4. **Decision** — The Board issues a written, reasoned decision. Outcomes may include: reinstatement, sustained revocation, conditional reinstatement (with remediation requirements), or modified sanctions.
+5. **Final Arbitration** — If the controller remains unsatisfied, they may invoke binding arbitration under ICC Rules within 60 days of the Board decision. The arbitration seat is Frankfurt am Main, Germany.
+
+During the appeals process, the DID status is set to `"suspended"` (not `"revoked"`) unless the revocation was triggered by immediate harm concerns.
+
+### 11.3 Registry Operator Requirements
+
+Any entity operating a TRAIL Registry (whether the default registry or a federated instance per §3.3) MUST meet the following requirements:
+
+| Requirement | Specification |
+|-------------|---------------|
+| **Certificate Policy (CP)** | MUST publish a Certificate Policy document conforming to RFC 3647 structure |
+| **Certificate Practice Statement (CPS)** | MUST publish a CPS describing operational practices |
+| **Uptime SLA** | MUST maintain 99.9% availability for the resolution API (measured monthly) |
+| **Annual Audit** | MUST undergo an independent security audit annually (SOC 2 Type II or equivalent) |
+| **Insurance** | MUST maintain cyber liability insurance of at least EUR 1,000,000 |
+| **Incident Response** | MUST maintain a documented incident response plan with 1-hour initial response SLA for critical incidents |
+| **Data Jurisdiction** | MUST store all personal data within the EU/EEA unless explicitly agreed otherwise with registrants |
+| **Revocation Capability** | MUST be able to revoke any DID within 1 hour of a validated revocation request |
+| **Key Ceremony** | Root key generation and rotation MUST follow a documented key ceremony process with at least 2 independent witnesses |
+
+### 11.4 Change Management
+
+Changes to the TRAIL Protocol specification, governance framework, and registry operating procedures follow a structured change management process:
+
+| Change Type | Notice Period | Approval Required | Examples |
+|-------------|---------------|-------------------|----------|
+| **Non-breaking** | 90 days | Registry Operator notification | New optional DID Document properties, new service types, trust score formula adjustments |
+| **Breaking** | 180 days | Advisory/Governance Board approval | ABNF syntax changes, authentication mechanism changes, removal of supported modes |
+| **Emergency** | Immediate | Post-hoc ratification within 30 days | Critical security patches, zero-day vulnerability mitigations |
+
+All changes:
+- MUST be versioned using Semantic Versioning (MAJOR.MINOR.PATCH)
+- MUST be published to the TRAIL GitHub repository with a changelog entry
+- MUST include a migration guide for breaking changes
+- SHOULD include a reference implementation update
+
+---
+
+## 12. Appendix A — JSON Registry Entry
 
 The following JSON file is submitted for inclusion in the [W3C DID Specification Registries](https://github.com/w3c/did-spec-registries/tree/main/methods) as `trail.json`:
 
@@ -707,25 +1319,25 @@ The following JSON file is submitted for inclusion in the [W3C DID Specification
 
 ---
 
-## Appendix B — Example DID Documents
+## 13. Appendix B — Example DID Documents
 
 ### B.1 Minimal Organization DID Document
 
 ```json
 {
   "@context": ["https://www.w3.org/ns/did/v1", "https://trailprotocol.org/ns/did/v1"],
-  "id": "did:trail:org:example-gmbh-de",
+  "id": "did:trail:org:example-gmbh-de-b8c9d0e1",
   "verificationMethod": [{
-    "id": "did:trail:org:example-gmbh-de#key-1",
+    "id": "did:trail:org:example-gmbh-de-b8c9d0e1#key-1",
     "type": "JsonWebKey2020",
-    "controller": "did:trail:org:example-gmbh-de",
+    "controller": "did:trail:org:example-gmbh-de-b8c9d0e1",
     "publicKeyJwk": {
       "kty": "OKP", "crv": "Ed25519",
       "x": "11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo"
     }
   }],
-  "authentication": ["did:trail:org:example-gmbh-de#key-1"],
-  "assertionMethod": ["did:trail:org:example-gmbh-de#key-1"]
+  "authentication": ["did:trail:org:example-gmbh-de-b8c9d0e1#key-1"],
+  "assertionMethod": ["did:trail:org:example-gmbh-de-b8c9d0e1#key-1"]
 }
 ```
 
@@ -734,26 +1346,27 @@ The following JSON file is submitted for inclusion in the [W3C DID Specification
 ```json
 {
   "@context": ["https://www.w3.org/ns/did/v1", "https://trailprotocol.org/ns/did/v1"],
-  "id": "did:trail:agent:example-gmbh-de-support-bot-v2",
-  "controller": "did:trail:org:example-gmbh-de",
+  "id": "did:trail:agent:example-gmbh-de-support-bot-v2-e1f2a3b4",
+  "controller": "did:trail:org:example-gmbh-de-b8c9d0e1",
   "trail:aiSystemType": "agent",
   "trail:euAiActRiskClass": "minimal",
-  "trail:parentOrganization": "did:trail:org:example-gmbh-de",
+  "trail:parentOrganization": "did:trail:org:example-gmbh-de-b8c9d0e1",
+  "trail:trailTrustTier": 1,
   "verificationMethod": [{
-    "id": "did:trail:agent:example-gmbh-de-support-bot-v2#key-1",
+    "id": "did:trail:agent:example-gmbh-de-support-bot-v2-e1f2a3b4#key-1",
     "type": "JsonWebKey2020",
-    "controller": "did:trail:agent:example-gmbh-de-support-bot-v2",
+    "controller": "did:trail:agent:example-gmbh-de-support-bot-v2-e1f2a3b4",
     "publicKeyJwk": {
       "kty": "OKP", "crv": "Ed25519",
       "x": "SL0q3Ldb2_XtIiR2fwWoXL97uZa5tKdXxO__fwXBmxM"
     }
   }],
-  "authentication": ["did:trail:agent:example-gmbh-de-support-bot-v2#key-1"],
-  "assertionMethod": ["did:trail:agent:example-gmbh-de-support-bot-v2#key-1"],
+  "authentication": ["did:trail:agent:example-gmbh-de-support-bot-v2-e1f2a3b4#key-1"],
+  "assertionMethod": ["did:trail:agent:example-gmbh-de-support-bot-v2-e1f2a3b4#key-1"],
   "service": [{
-    "id": "did:trail:agent:example-gmbh-de-support-bot-v2#trail-registry",
+    "id": "did:trail:agent:example-gmbh-de-support-bot-v2-e1f2a3b4#trail-registry",
     "type": "TrailRegistryService",
-    "serviceEndpoint": "https://registry.trailprotocol.org/1.0/identifiers/did:trail:agent:example-gmbh-de-support-bot-v2"
+    "serviceEndpoint": "https://registry.trailprotocol.org/1.0/identifiers/did:trail:agent:example-gmbh-de-support-bot-v2-e1f2a3b4"
   }]
 }
 ```
@@ -764,23 +1377,48 @@ The following JSON file is submitted for inclusion in the [W3C DID Specification
 {
   "@context": ["https://www.w3.org/ns/did/v1", "https://trailprotocol.org/ns/did/v1"],
   "id": "did:trail:self:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-  "trail:trailMode": "self-signed",
+  "trail:trailTrustTier": 0,
   "verificationMethod": [{
     "id": "did:trail:self:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#key-1",
     "type": "JsonWebKey2020",
     "controller": "did:trail:self:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
     "publicKeyJwk": {
       "kty": "OKP", "crv": "Ed25519",
-      "x": "z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+      "x": "11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo"
     }
   }],
-  "authentication": ["did:trail:self:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#key-1"]
+  "authentication": ["did:trail:self:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#key-1"],
+  "assertionMethod": ["did:trail:self:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#key-1"]
 }
 ```
 
 ---
 
-## References
+## 14. Changelog
+
+### v1.1.0-draft (2026-03-04)
+
+This release addresses 9 critical improvements identified during community review and internal audit of v1.0.0-draft.
+
+| # | Change | Sections Affected |
+|---|--------|-------------------|
+| 1 | **Replaced "decentralized" with "vendor-neutral"** — The TRAIL Registry is not decentralized in the blockchain sense; it is a vendor-neutral, federated infrastructure. Terminology updated throughout. Added federation support (§3.3). | Abstract, §1.1, §1.2, §3.3 |
+| 2 | **Replaced Bearer token auth with DID Auth** — All API examples now use HTTP Message Signatures (RFC 9421) with Ed25519 keys instead of Bearer tokens. Added dedicated Authentication section. | §6.1.2, §6.3, §6.4.1, §6.5 (new) |
+| 3 | **Added content-addressable hash suffix** — DID identifiers for `org` and `agent` modes now include an 8-character hash suffix derived from the slug and public key, preventing accidental collisions and binding identifiers to key material. | §4.1, §4.2, §4.4, §4.5 (new), all examples |
+| 4 | **Made Trust Score transparent** — Trust score is now a structured object with per-dimension breakdown instead of an opaque float. Added verifier-side computation endpoint and exact scoring formulas. | §7.3 (rewritten) |
+| 5 | **Reframed self-signed mode** — Renamed from "Early Adopter Mode" to "Local Verification Mode." Now positioned as the foundational trust tier (Tier 0) rather than a temporary workaround. Added 3-tier trust model. | §4.2, §7.2 (rewritten) |
+| 6 | **Fixed EU AI Act overclaims** — Changed language from "designed for compliance" to "designed to support organizational compliance." Added honest capability mapping table with explicit compliance gaps and disclaimer. | Abstract, §1.2, §7.4 (new) |
+| 7 | **Added Governance section** — New §11 covering governance evolution (3 phases), dispute resolution with revocation appeals process, registry operator requirements, and change management. | §11 (new), §6.4.2 |
+| 8 | **Added Key Recovery mechanisms** — New §8.7 defining four recovery options: multi-controller, social recovery (M-of-N threshold), registry-assisted recovery, and optional key escrow. | §8.1, §8.7 (new), §5.2 |
+| 9 | **Rewrote Reference Implementation** — Removed fictional package references. Replaced with `@trailprotocol/core` (actual package under development). Universal Resolver driver marked as planned. | §10 (rewritten) |
+
+### v1.0.0-draft (2026-03-01)
+
+- Initial specification draft submitted for W3C DID Specification Registries
+
+---
+
+## 15. References
 
 ### Normative References
 
@@ -789,6 +1427,7 @@ The following JSON file is submitted for inclusion in the [W3C DID Specification
 - [DID-SPEC-REGISTRIES] W3C. *DID Specification Registries*. https://www.w3.org/TR/did-spec-registries/
 - [RFC8037] IETF. *CFRG Elliptic Curves for JOSE and COSE*. https://www.rfc-editor.org/rfc/rfc8037
 - [RFC7517] IETF. *JSON Web Key (JWK)*. https://www.rfc-editor.org/rfc/rfc7517
+- [RFC9421] IETF. *HTTP Message Signatures*. https://www.rfc-editor.org/rfc/rfc9421
 - [RFC2119] IETF. *Key words for use in RFCs*. https://www.rfc-editor.org/rfc/rfc2119
 - [STATUS-LIST-2021] W3C CCG. *Status List 2021*. https://www.w3.org/TR/vc-status-list/
 
@@ -798,12 +1437,13 @@ The following JSON file is submitted for inclusion in the [W3C DID Specification
 - [EIDAS-2] European Parliament. *Regulation (EU) 2024/1183 (eIDAS 2.0)*. https://eur-lex.europa.eu/eli/reg/2024/1183/oj
 - [EIP-6551] Ethereum. *Token Bound Accounts*. https://eips.ethereum.org/EIPS/eip-6551
 - [OID4VC] OpenID Foundation. *OpenID for Verifiable Credentials*. https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
+- [RFC3647] IETF. *Internet X.509 PKI Certificate Policy and Certification Practices Framework*. https://www.rfc-editor.org/rfc/rfc3647
 - [TRAIL-WHITEPAPER] Hommrich, C. *TRAIL Protocol Whitepaper v1.0*. 2026. https://trailprotocol.org/whitepaper
 - [TRAIL-BLUEPRINT-1] Hommrich, C. *TRAIL Protocol Blueprint Part 1*. 2026. https://trailprotocol.org/blueprint/part1
 - [TRAIL-BLUEPRINT-2] Hommrich, C. *TRAIL Protocol Blueprint Part 2*. 2026. https://trailprotocol.org/blueprint/part2
 
 ---
 
-*© 2026 Christian Hommrich / TRAIL Protocol Initiative. Licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).*
+*Copyright 2026 Christian Hommrich / TRAIL Protocol Initiative. Licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).*
 *This specification is submitted to the W3C Credentials Community Group for review.*
 *Repository: https://github.com/trailprotocol/trail-did-method*

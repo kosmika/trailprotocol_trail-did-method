@@ -59,7 +59,7 @@ bash resolve-http.sh "did:trail:org:acme-corp-eu-a7f3b2c1e9d04f5a"
 
 This demonstrates the HTTP resolution pattern for registry-backed `did:trail` identifiers.
 
-Note: this example documents the expected registry HTTP request pattern. A live response depends on the public registry endpoint being reachable from your current environment.
+Note: The HTTP resolution example documents the expected API pattern. Live responses require a running TRAIL registry instance (public registry coming soon).
 
 ## Package metadata
 

@@ -39,3 +39,16 @@ From the repository root:
 
 ```bash
 node validation/validate.js validation/fixtures/valid-did-document.json
+
+```
+## Run the automated tests
+
+From the repository root:
+
+```bash
+node --test validation/test.js
+```
+
+The test runner loads all fixtures in `validation/fixtures/` and verifies that:
+- `valid-did-document.json` passes validation
+- all `invalid-*.json` fixtures fail validation

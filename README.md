@@ -4,6 +4,8 @@
 
 [![W3C DID Core 1.0](https://img.shields.io/badge/W3C-DID%20Core%201.0-blue)](https://www.w3.org/TR/did-core/)
 [![VC Data Model 2.0](https://img.shields.io/badge/W3C-VC%202.0-blue)](https://www.w3.org/TR/vc-data-model-2.0/)
+[![DIF Contributor](https://img.shields.io/badge/DIF-Contributor-blue)](https://identity.foundation)
+[![W3C CCG Member](https://img.shields.io/badge/W3C%20CCG-Member-blue)](https://www.w3.org/community/credentials/)
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 [![License: MIT](https://img.shields.io/badge/Code-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Status: Draft](https://img.shields.io/badge/Spec-v1.1.0--draft-orange)](https://github.com/trailprotocol/trail-did-method/issues)
@@ -105,6 +107,9 @@ trail-did-method/
 ├── README.md                    <- This file
 ├── LICENSE                      <- CC BY 4.0 (spec) + MIT (code)
 ├── CONTRIBUTING.md              <- How to contribute
+├── CODE_OF_CONDUCT.md           <- Community standards + AI-specific ethics
+├── ETHICS.md                    <- Ethical principles guiding protocol design
+├── GOVERNANCE.md                <- Decision-making, roles, dispute resolution
 ├── spec/
 │   └── did-method-trail-v1.md  <- Complete DID Method Specification (v1.1.0-draft)
 ├── packages/
@@ -124,7 +129,13 @@ trail-did-method/
 
 ---
 
-## Specification
+## Documentation
+
+### Technical Whitepaper
+
+The full TRAIL Protocol Technical Whitepaper v1.0 is available at [trailprotocol.org/whitepaper](https://trailprotocol.org/whitepaper) (CC BY 4.0). It covers the complete architecture, cryptographic design, CA infrastructure, Trust Badge widget, and EU AI Act compliance mapping.
+
+### DID Method Specification
 
 The full `did:trail` DID Method Specification v1.1.0-draft is available in [`spec/did-method-trail-v1.md`](spec/did-method-trail-v1.md).
 
@@ -135,6 +146,17 @@ Key sections:
 - [Trust Extensions](spec/did-method-trail-v1.md#7-trail-trust-extensions) — 3-Tier Trust Model, transparent Trust Score
 - [Security Considerations](spec/did-method-trail-v1.md#8-security-considerations) — including Key Recovery
 - [Governance](spec/did-method-trail-v1.md#11-governance) — dispute resolution, registry operator requirements
+
+---
+
+## Community & Governance
+
+TRAIL is being developed as an open community standard in coordination with:
+
+- **[Decentralized Identity Foundation (DIF)](https://identity.foundation)** - TRAIL is presented in the [Trusted AI Agents Working Group (TAAWG)](https://identity.foundation) for peer review and alignment with the broader DID ecosystem.
+- **[W3C Credentials Community Group (CCG)](https://www.w3.org/community/credentials/)** - Discussion of `did:trail` in the context of W3C standards. Mailing list: [public-credentials@w3.org](mailto:public-credentials@w3.org)
+
+We welcome critique, co-maintainers, and interoperability proposals from both communities.
 
 ---
 
@@ -183,13 +205,15 @@ The `methods/trail.json` file in this repository is submitted for inclusion in t
 
 ## Contribute
 
-We welcome contributions, questions, and challenges. If you find a flaw in the specification — that's exactly what we want to know.
+We welcome contributions, questions, and challenges. If you find a flaw in the specification - that's exactly what we want to know.
 
 - **Open an issue** for specification questions, security concerns, or improvement suggestions
-- **Join the discussion** at the W3C Credentials Community Group: [public-credentials@w3.org](mailto:public-credentials@w3.org)
-- **Contact the author:** christian.hommrich@gmail.com
+- **Submit a PR** - see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines, branch naming, and review process
+- **Join DIF Discord** - connect with contributors in the [DIF Discord](https://discord.gg/decentralized-identity) (#did-methods, TAAWG channels)
+- **Join W3C CCG** - discuss `did:trail` on the mailing list: [public-credentials@w3.org](mailto:public-credentials@w3.org)
+- **Contact the author:** christian.hommrich@trailprotocol.org
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+This project follows our own [Code of Conduct](CODE_OF_CONDUCT.md) and [Ethical Principles](ETHICS.md). See [GOVERNANCE.md](GOVERNANCE.md) for how decisions are made.
 
 ---
 

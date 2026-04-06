@@ -65,8 +65,43 @@ For minor fixes (typos, formatting), direct PRs are welcome.
 
 ## Code of Conduct
 
-Be constructive. Technical disagreement is welcome; personal attacks are not.
+This project has its own [Code of Conduct](CODE_OF_CONDUCT.md) adapted from the Contributor Covenant with AI-specific extensions. By participating, you agree to uphold its principles.
+
+In short: Be constructive. Technical disagreement is welcome; personal attacks are not. Assume good intent. Report violations to conduct@trailprotocol.org.
+
+We also adhere to the [DIF Code of Conduct](https://github.com/decentralized-identity/org/blob/master/code-of-conduct.md) when participating in DIF community spaces.
+
+## Ethics and Governance
+
+TRAIL Protocol maintains explicit ethical principles and a governance model:
+
+- **[ETHICS.md](ETHICS.md)** - The ethical principles that guide protocol design decisions
+- **[GOVERNANCE.md](GOVERNANCE.md)** - How decisions are made, roles, and dispute resolution
+
+All contributions are evaluated against these principles. Please review them before submitting substantial proposals.
+
+## Community
+
+TRAIL is developed in coordination with:
+
+- **[Decentralized Identity Foundation (DIF)](https://identity.foundation)** - Join the [DIF Discord](https://discord.gg/decentralized-identity) to connect with other contributors. Relevant channels: `#did-methods`, TAAWG working group channels.
+- **[W3C Credentials Community Group (CCG)](https://www.w3.org/community/credentials/)** - Mailing list: [public-credentials@w3.org](mailto:public-credentials@w3.org). Archive: [lists.w3.org](https://lists.w3.org/Archives/Public/public-credentials/)
+
+## Branch Naming
+
+When submitting PRs, please use one of these branch prefixes:
+
+- `spec/` - Specification changes (e.g., `spec/add-key-rotation-section`)
+- `feat/` - New features or examples (e.g., `feat/python-resolution-example`)
+- `fix/` - Bug fixes (e.g., `fix/typo-in-did-syntax`)
+- `docs/` - Documentation improvements (e.g., `docs/update-roadmap`)
+
+## Licensing
+
+By contributing, you agree that your contributions will be licensed under the project's dual license:
+- **Specification contributions** (`.md` files in `spec/`): [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)
+- **Code contributions**: [MIT License](https://opensource.org/licenses/MIT)
 
 ## Contact
 
-Christian Hommrich — christian.hommrich@gmail.com
+Christian Hommrich - christian.hommrich@trailprotocol.org

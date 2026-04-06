@@ -65,9 +65,20 @@ For minor fixes (typos, formatting), direct PRs are welcome.
 
 ## Code of Conduct
 
-This project adheres to the [DIF Code of Conduct](https://github.com/decentralized-identity/org/blob/master/code-of-conduct.md). By participating, you agree to uphold its principles of open, inclusive, and collaborative engagement.
+This project has its own [Code of Conduct](CODE_OF_CONDUCT.md) adapted from the Contributor Covenant with AI-specific extensions. By participating, you agree to uphold its principles.
 
-In short: Be constructive. Technical disagreement is welcome; personal attacks are not. Assume good intent. If conflicts arise, follow the [DIF escalation process](https://github.com/decentralized-identity/org/blob/master/code-of-conduct.md#reporting-guidelines).
+In short: Be constructive. Technical disagreement is welcome; personal attacks are not. Assume good intent. Report violations to conduct@trailprotocol.org.
+
+We also adhere to the [DIF Code of Conduct](https://github.com/decentralized-identity/org/blob/master/code-of-conduct.md) when participating in DIF community spaces.
+
+## Ethics and Governance
+
+TRAIL Protocol maintains explicit ethical principles and a governance model:
+
+- **[ETHICS.md](ETHICS.md)** - The ethical principles that guide protocol design decisions
+- **[GOVERNANCE.md](GOVERNANCE.md)** - How decisions are made, roles, and dispute resolution
+
+All contributions are evaluated against these principles. Please review them before submitting substantial proposals.
 
 ## Community
 

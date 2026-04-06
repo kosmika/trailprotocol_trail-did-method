@@ -107,6 +107,9 @@ trail-did-method/
 ├── README.md                    <- This file
 ├── LICENSE                      <- CC BY 4.0 (spec) + MIT (code)
 ├── CONTRIBUTING.md              <- How to contribute
+├── CODE_OF_CONDUCT.md           <- Community standards + AI-specific ethics
+├── ETHICS.md                    <- Ethical principles guiding protocol design
+├── GOVERNANCE.md                <- Decision-making, roles, dispute resolution
 ├── spec/
 │   └── did-method-trail-v1.md  <- Complete DID Method Specification (v1.1.0-draft)
 ├── packages/
@@ -210,7 +213,7 @@ We welcome contributions, questions, and challenges. If you find a flaw in the s
 - **Join W3C CCG** - discuss `did:trail` on the mailing list: [public-credentials@w3.org](mailto:public-credentials@w3.org)
 - **Contact the author:** christian.hommrich@trailprotocol.org
 
-This project follows the [DIF Code of Conduct](https://github.com/decentralized-identity/org/blob/master/code-of-conduct.md).
+This project follows our own [Code of Conduct](CODE_OF_CONDUCT.md) and [Ethical Principles](ETHICS.md). See [GOVERNANCE.md](GOVERNANCE.md) for how decisions are made.
 
 ---
 

@@ -12,9 +12,9 @@
 
 ## Abstract
 
-The `did:trail` DID method specifies how Decentralized Identifiers (DIDs) are created, resolved, updated, and deactivated within the TRAIL (Trust Registry for AI Identity Layer) protocol. TRAIL provides a vendor-neutral trust registry for artificial intelligence systems, autonomous agents, and AI-powered services operating in B2B commerce environments.
+The `did:trail` DID method specifies how Decentralized Identifiers (DIDs) are created, resolved, updated, and deactivated within the TRAIL (Trust Registry for AI Identity Layer) protocol. TRAIL provides a vendor-neutral, **protocol-agnostic** trust registry for artificial intelligence systems, autonomous agents, and AI-powered services operating in B2B commerce environments. TRAIL identities are independent of any specific agent communication protocol (MCP, A2A, DIDComm, or custom protocols) - the identity travels with the agent, not with the communication channel.
 
-This specification defines the `did:trail` method conforming to the [W3C DID Core 1.0 specification](https://www.w3.org/TR/did-core/) and the [Verifiable Credentials Data Model 2.0](https://www.w3.org/TR/vc-data-model-2.0/). It enables organizations and AI agents to establish cryptographically verifiable identities, express their AI usage policies, and participate in a trust ecosystem designed to support organizational compliance with the EU AI Act (Articles 13, 14, 26, 49, 52) and aligned with eIDAS 2.0.
+This specification defines the `did:trail` method conforming to the [W3C DID Core 1.0 specification](https://www.w3.org/TR/did-core/) and the [Verifiable Credentials Data Model 2.0](https://www.w3.org/TR/vc-data-model-2.0/). It enables organizations and AI agents to establish cryptographically verifiable, **auditor-grade** identities, express their AI usage policies, and participate in a trust ecosystem designed to support organizational compliance with the EU AI Act (Articles 13, 14, 26, 49, 52) and aligned with eIDAS 2.0.
 
 ---
 
@@ -76,8 +76,9 @@ This document is a **Draft** specification submitted for registration in the [W3
 12. [Appendix A — JSON Registry Entry](#12-appendix-a--json-registry-entry)
 13. [Appendix B — Example DID Documents](#13-appendix-b--example-did-documents)
 14. [Appendix C — Test Vectors](#14-appendix-c--test-vectors)
-15. [Changelog](#15-changelog)
-16. [References](#16-references)
+15. [Appendix D — Artifact Provenance](#appendix-d--artifact-provenance)
+16. [Changelog](#16-changelog)
+17. [References](#17-references)
 
 ---
 
@@ -102,6 +103,7 @@ The `did:trail` method is designed to:
 - **Scale across B2B commerce** — from SMEs to enterprise deployments
 - **Work without a dedicated blockchain** — the TRAIL registry uses established web infrastructure with cryptographic anchoring
 - **Support federation** — enable multiple independent registries to interoperate, preventing vendor lock-in and enabling jurisdictional deployments
+- **Be protocol-agnostic** — work independently of any specific agent communication protocol (MCP, A2A, DIDComm, or custom). The identity layer is decoupled from the transport layer, enabling cross-platform agent identity verification
 
 ### 1.3 Relationship to Other DID Methods
 
@@ -130,6 +132,8 @@ The `did:trail` method is designed to:
 | **Cost** | Free (self) / Subscription (registry) | Free (own domain) | Free (ION network) | Free (EU-funded infrastructure) |
 | **GDPR Compliance** | Yes (no PII on-chain) | Yes (server-side) | Problematic (Bitcoin immutability) | Yes (GDPR by design) |
 | **Crypto Agility** | Yes (SUPPORTED_CRYPTOSUITES registry) | Depends on implementation | Limited (Secp256k1) | Yes (eIDAS 2.0 compliant) |
+| **Protocol Dependency** | None (protocol-agnostic) | None | None | None (but EU-scoped) |
+| **AI Agent Native** | Yes (trust score, risk class, AI policy, artifact provenance) | No | No | No |
 
 ---
 
@@ -903,7 +907,7 @@ Where `wi` is the weight and `di` is the dimension score (0.0–1.0) for each di
   ```
   d3 = signed_outputs / total_outputs
   ```
-  Where `signed_outputs` is the number of AI outputs accompanied by valid source attestation credentials. Measured over trailing 90 days.
+  Where `signed_outputs` is the number of AI outputs accompanied by valid source attestation credentials. Measured over trailing 90 days. See [Appendix D](#appendix-d--artifact-provenance) for a complete `OutputAttestationVC` example demonstrating how agents can sign individual artifacts for provenance tracking.
 
 - **D4 (Behavioral Consistency):**
   ```
@@ -1753,7 +1757,79 @@ Note: The JCS output differs from the input in key ordering (`@context` sorts be
 
 ---
 
-## 15. Changelog
+## 15. Appendix D — Artifact Provenance
+
+### Scope and Relationship to did:trail
+
+The `did:trail` method solves **agent-level identity**: who IS this agent, who deployed it, and what trust score does it hold. **Artifact-level provenance** - tracking which agent produced which specific output - is a complementary layer built on top of the identity foundation.
+
+This appendix defines the `OutputAttestationVC` credential type, which enables agents (or their deploying organizations) to cryptographically bind a specific artifact to a `did:trail` identity. This mechanism directly supports the D3 (Information Provenance) trust score dimension defined in [§7.3](#73-trust-score).
+
+> **Design rationale:** Not every use case requires full artifact traceability, but every use case requires verifiable agent identity. The identity layer MUST exist before artifact provenance is meaningful - you cannot trace artifacts back to an unverified agent. This is why TRAIL separates the two concerns: identity is core spec, provenance is built on top.
+
+### OutputAttestationVC
+
+The `OutputAttestationVC` is a Verifiable Credential that binds a specific AI-generated artifact to the agent that produced it.
+
+```json
+{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://trailprotocol.org/ns/v1"
+  ],
+  "type": ["VerifiableCredential", "OutputAttestationVC"],
+  "issuer": "did:trail:org:acme-corp-a1b2c3d4e5f67890",
+  "validFrom": "2026-04-13T14:30:00Z",
+  "credentialSubject": {
+    "id": "did:trail:agent:acme-sales-bot-f9e8d7c6b5a43210",
+    "outputHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "outputType": "text/markdown",
+    "outputDescription": "Sales proposal for Project Alpha",
+    "timestamp": "2026-04-13T14:28:00Z",
+    "sessionId": "urn:uuid:550e8400-e29b-41d4-a716-446655440000"
+  },
+  "proof": {
+    "type": "DataIntegrityProof",
+    "cryptosuite": "eddsa-jcs-2022",
+    "verificationMethod": "did:trail:org:acme-corp-a1b2c3d4e5f67890#key-1",
+    "created": "2026-04-13T14:30:00Z",
+    "proofPurpose": "assertionMethod"
+  }
+}
+```
+
+#### Field Requirements
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `issuer` | MUST | The deploying organization's `did:trail` DID. The organization is accountable for its agent's outputs. |
+| `credentialSubject.id` | MUST | The `did:trail:agent` DID that produced the artifact. |
+| `credentialSubject.outputHash` | MUST | Content-addressable hash of the artifact (SHA-256, prefixed with algorithm). |
+| `credentialSubject.outputType` | SHOULD | MIME type of the artifact. |
+| `credentialSubject.outputDescription` | MAY | Human-readable description of the artifact. |
+| `credentialSubject.timestamp` | MUST | ISO 8601 timestamp of when the artifact was produced. |
+| `credentialSubject.sessionId` | MAY | Session or conversation identifier for grouping related artifacts. |
+
+#### Verification Algorithm
+
+A verifier validating an `OutputAttestationVC` MUST:
+
+1. Resolve the `issuer` DID and verify the proof signature against the issuer's verification method.
+2. Resolve the `credentialSubject.id` (agent DID) and verify that the issuer is the agent's registered deployer (controller).
+3. Verify that the `outputHash` matches the artifact being verified.
+4. Check that the credential has not been revoked.
+
+#### Relationship to D3 Trust Score
+
+Each valid, non-revoked `OutputAttestationVC` issued by an agent's deployer counts as a `signed_output` for the D3 (Information Provenance) dimension. The ratio of signed to total outputs over the trailing 90 days determines the D3 score.
+
+#### Protocol Independence
+
+The `OutputAttestationVC` is protocol-agnostic. It can be issued regardless of how the agent communicates (MCP, A2A, DIDComm, REST API, or any custom protocol). The credential attests to the artifact's provenance, not the communication channel used to produce it.
+
+---
+
+## 16. Changelog
 
 ### v1.2.0-draft (2026-04-10)
 
@@ -1766,6 +1842,13 @@ This release adds normative support for platform-hosted AI agent deployments (Ma
 
 Community discussion: [GitHub Discussion #10](https://github.com/trailprotocol/trail-did-method/discussions/10)
 Tracking issue: [Issue #9](https://github.com/trailprotocol/trail-did-method/issues/9)
+
+#### v1.2.0-draft Addendum (2026-04-13)
+
+| # | Change | Sections Affected |
+|---|--------|-------------------|
+| 3 | **Sharpened protocol-agnostic positioning in Abstract and Design Goals** — Added "protocol-agnostic" and "auditor-grade" language to Abstract. New Design Goal: "Be protocol-agnostic." Added "Protocol Dependency" and "AI Agent Native" rows to Technical Differentiation table. | Abstract, §1.2 |
+| 4 | **Added Appendix D: Artifact Provenance** — New informative appendix defining `OutputAttestationVC` credential type for binding agent identity to produced artifacts. Includes JSON example, field requirements, verification algorithm, and relationship to D3 Trust Score dimension. Cross-reference added from §7.3.1. | Appendix D (new), §7.3.1 |
 
 ### v1.1.0-draft (2026-03-04)
 

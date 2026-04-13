@@ -232,15 +232,15 @@ Identifies a legal entity (company, institution) operating AI systems.
 
 ```
 did:trail:org:acme-corp-eu-a7f3b2c1e9d04f5a
-did:trail:org:deutschebank-ai-desk-e2f4a6b8
+did:trail:org:deutschebank-ai-desk-e2f4a6b8c1d30f9a
 ```
 
 #### `agent` — AI Agent Deployment Identity
 Identifies an AI agent **deployment** operated by an organization. A deployment is a named, versioned configuration of an AI system — distinct from any individual running instance. MUST be associated with a parent `org` DID via the `trail:parentOrganization` property.
 
 ```
-did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7b8c3
-did:trail:agent:db-contract-analysis-prod-001-c8d9e0f1a2b4
+did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7b8c3d4e5
+did:trail:agent:db-contract-analysis-prod-001-c8d9e0f1a2b4e6f7
 ```
 
 **Deployment vs. Instance:** The `agent` DID identifies the *deployment configuration*, not a running process. This distinction is critical for platform-hosted agents (e.g., Anthropic Managed Agents, Azure AI, Google Vertex AI) that are dynamically provisioned per session. A single `did:trail:agent` DID covers all instances spawned from one deployment configuration, across all sessions, for the active lifetime of that deployment. This maps to the "Deployment vs. Pod" distinction in container orchestration.
@@ -277,7 +277,7 @@ did:trail:self:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK
 
 ```
 did:trail:org:acme-corp-eu-a7f3b2c1e9d04f5a
-did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7b8c3
+did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7b8c3d4e5
 did:trail:self:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK
 ```
 
@@ -419,16 +419,16 @@ The `https://trailprotocol.org/ns/did/v1` JSON-LD context defines the following 
     "https://w3id.org/security/suites/jws-2020/v1",
     "https://trailprotocol.org/ns/did/v1"
   ],
-  "id": "did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7b8c3",
+  "id": "did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7b8c3d4e5",
   "controller": [
     "did:trail:org:acme-corp-eu-a7f3b2c1e9d04f5a",
     "did:trail:org:acme-corp-eu-a7f3b2c1e9d04f5a#recovery-key-1"
   ],
   "verificationMethod": [
     {
-      "id": "did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7b8c3#key-1",
+      "id": "did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7b8c3d4e5#key-1",
       "type": "JsonWebKey2020",
-      "controller": "did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7b8c3",
+      "controller": "did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7b8c3d4e5",
       "publicKeyJwk": {
         "kty": "OKP",
         "crv": "Ed25519",
@@ -436,13 +436,13 @@ The `https://trailprotocol.org/ns/did/v1` JSON-LD context defines the following 
       }
     }
   ],
-  "authentication": ["did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7b8c3#key-1"],
-  "assertionMethod": ["did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7b8c3#key-1"],
+  "authentication": ["did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7b8c3d4e5#key-1"],
+  "assertionMethod": ["did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7b8c3d4e5#key-1"],
   "service": [
     {
-      "id": "did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7b8c3#trail-registry",
+      "id": "did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7b8c3d4e5#trail-registry",
       "type": "TrailRegistryService",
-      "serviceEndpoint": "https://registry.trailprotocol.org/1.0/identifiers/did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7b8c3"
+      "serviceEndpoint": "https://registry.trailprotocol.org/1.0/identifiers/did:trail:agent:acme-corp-eu-rfq-assistant-v1-d4e5f6a7b8c3d4e5"
     }
   ],
   "trail:aiSystemType": "agent",

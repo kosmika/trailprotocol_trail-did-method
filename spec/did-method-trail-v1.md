@@ -2222,7 +2222,7 @@ The `OutputAttestationVC` is protocol-agnostic. It can be issued regardless of h
 
 ## 16. Changelog
 
-### v1.2.0-draft (2026-04-10)
+### v1.2.0 (2026-04-21)
 
 This release adds normative support for platform-hosted AI agent deployments (Managed Agents). It addresses the structural gap identified in v1.1.0-draft: the assumption that an agent has a persistent identity and can directly interact with the TRAIL Registry does not hold for agents dynamically provisioned per session by third-party platforms.
 
@@ -2234,14 +2234,14 @@ This release adds normative support for platform-hosted AI agent deployments (Ma
 Community discussion: [GitHub Discussion #10](https://github.com/trailprotocol/trail-did-method/discussions/10)
 Tracking issue: [Issue #9](https://github.com/trailprotocol/trail-did-method/issues/9)
 
-#### v1.2.0-draft Addendum (2026-04-13)
+#### v1.2.0 Addendum (2026-04-13)
 
 | # | Change | Sections Affected |
 |---|--------|-------------------|
 | 3 | **Sharpened protocol-agnostic positioning in Abstract and Design Goals** — Added "protocol-agnostic" and "auditor-grade" language to Abstract. New Design Goal: "Be protocol-agnostic." Added "Protocol Dependency" and "AI Agent Native" rows to Technical Differentiation table. | Abstract, §1.2 |
 | 4 | **Added Appendix D: Artifact Provenance** — New informative appendix defining `OutputAttestationVC` credential type for binding agent identity to produced artifacts. Includes JSON example, field requirements, verification algorithm, and relationship to D3 Trust Score dimension. Cross-reference added from §7.3.1. | Appendix D (new), §7.3.1 |
 
-#### v1.2.0-draft Addendum (2026-04-14) — Issue #1 PR-Bundle
+#### v1.2.0 Addendum (2026-04-14) — Issue #1 PR-Bundle
 
 Addresses Issue [#1](https://github.com/trailprotocol/trail-did-method/issues/1) (Federation + Trust Anchor). Builds on the technical memo from Amey Parle (2026-04-13) and closes Challenge Register einwaende E-013 (Federation Trust Anchor Model) and E-014 (Cross-Registry Verification + Revocation Propagation). Co-architected with Amey Parle.
 
@@ -2253,7 +2253,7 @@ Addresses Issue [#1](https://github.com/trailprotocol/trail-did-method/issues/1)
 | 8 | **Renumbered §8.7–§8.11 → §8.8–§8.12** — Key Recovery, Key Rotation Protocol, Specification Versioning, Revocation Roadmap, and Protocol Roadmap shifted down by one to make room for the new §8.7 Revocation Propagation Protocol. All cross-references updated. | §8.8–§8.12 |
 | 9 | **Added Agent Declaration in Content Signatures (normative)** — New §8.13 defining the `AgentDeclaration` signature pattern: cryptographically binds AI-generated content artifacts to an agent DID and an accountable organization DID. Provides attribution, integrity, non-repudiation, and revocation-awareness properties required under EU AI Act Art. 12. Includes signature format (§8.13.2), verification algorithm (§8.13.3), accountability model (§8.13.4), audit trail mapping (§8.13.5), and security considerations (§8.13.6). | §8.13 (new) |
 
-#### v1.2.0-draft Addendum (2026-04-21)
+#### v1.2.0 Addendum (2026-04-21)
 
 | # | Change | Sections Affected |
 |---|--------|-------------------|

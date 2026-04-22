@@ -51,7 +51,7 @@ externalDocs:
 
 servers:
   - url: https://registry.trailprotocol.org/1.0
-    description: TSAI Tier-1 Root Registry (production)
+    description: Reference base URL (not a deployed registry)
   - url: https://{operator}/1.0
     description: Conformant operator registry
     variables:
@@ -498,8 +498,8 @@ paths:
                 supportedCryptosuites:
                   - "eddsa-jcs-2023"
                 specVersion: "1.2.1"
-                operatorName: "TrailSign AI GmbH"
-                operatorContact: "christian.hommrich@trailsignai.com"
+                operatorName: "Example Registry Operator"
+                operatorContact: "ops@registry.example.com"
         '404':
           description: This server does not expose a TRAIL registry manifest (not a conformant registry).
           content:
